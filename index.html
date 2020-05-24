@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700&family=Noto+Sans+KR:wght@700&display=swap" rel="stylesheet">
+	<title>Puzzle</title>
+</head>
+<style>
+	body, button, select, input {
+		font-family: "Noto Sans KR";
+	}
+	canvas {
+		border: 1px solid black;
+	}
+</style>
+<body>
+	<h1 style="font-family: 'Exo 2', 'Noto Sans KR';">라스트오리진 아십니까?</h1>
+	<div>
+		<canvas width="400" height="400"></canvas>
+	</div>
+	<div>
+		<label for="size">크기 : </label><input type="number" id="size" value="3">
+	</div>
+	<div>
+		<select name="" id="puzzle-selector">
+			<option value="0">콘스탄챠</option>
+			<option value="1">그리폰</option>
+			<option value="2">경멸스런 눈빛</option>
+			<option value="3">라스트오리진</option>
+			<option value="4">라스트오리진 (2)</option>
+			<option value="5">조용히 하세요!</option>
+			<option value="6" selected>나앤</option>
+			<option value="7">기간테스</option>
+		</select>
+	</div>
+	<div>
+		<button id="apply-setting">설정 적용하기</button><button id="start" disabled>시작하기</button>
+	</div>
+</body>
+<script src="app.js"></script>
+</html>
