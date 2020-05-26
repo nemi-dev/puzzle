@@ -2,7 +2,7 @@ const path = require('path');
 
 /** @type {import('webpack').Configuration} */
 module.exports = {
-	entry : './app/index.ts',
+	entry : './src/index.ts',
 	output : {
 		filename : 'app.js',
 		path : path.resolve(__dirname)
@@ -18,5 +18,7 @@ module.exports = {
 	},
 	resolve : {
 		extensions : [ '.ts', '.js' ]
-	}
+	},
+	mode : 'development',
+	devtool : 'eval-source-map'
 }

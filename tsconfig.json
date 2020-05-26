@@ -1,6 +1,9 @@
 {
 	"compilerOptions": {
-		"target": "ES5",
+		"target": "ES6",
 		"allowJs": true
+	},
+	"typingOptions" : {
+		"enableAutoDiscovery" : true
 	}
 }
