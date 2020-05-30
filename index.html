@@ -14,7 +14,6 @@
 	}
 	body, button, select {
 		font-family: "Noto Sans KR";
-		text-align: center;
 	}
 	input {
 		font-family: 'Exo 2';
@@ -40,6 +39,10 @@
 		max-width: calc(100vw - 2em);
 		margin: auto;
 	}
+	div.half {
+		display: inline-block;
+		width: 50%;
+	}
 	canvas {
 		border: 1px solid white;
 	}
@@ -49,57 +52,46 @@
 </style>
 <body>
 	<span style="font-family: 'Exo 2';"></span>
-	<h1 style="font-family: 'Noto Sans KR';">라스트오리진 아십니까?</h1>
-	<div>
-		<canvas width="360" height="360"></canvas>
+	<div style="text-align: center;">
+		<h1>라스트오리진 아십니까?</h1>
+		<canvas width="360" height="480"></canvas>
 	</div>
 	<div class="box">
-		<div class="item">
-			<label for="size">크기 : </label><input type="number" id="size" value="4" min="3" max="9" step="1">
+		<div class="item"><!--
+		--><div class="half"><label for="size">크기 : </label><input type="number" id="size" value="3" min="3" max="9" step="1"></div><!--
+			--><div class="half"><label for="puzzle-selector">퍼즐셋 : </label><select id="puzzle-selector"></select></div>
 		</div>
 		<div class="item">
-			<label for="puzzle-selector">퍼즐셋</label>
-			<select name="" id="puzzle-selector">
-				<option value="0">콘스탄챠</option>
-				<option value="1">그리폰과 좌우좌</option>
-				<option value="2">내려보는 콘스탄챠</option>
-				<option value="3">소완</option>
-				<option value="4">에밀리</option>
-				<option value="5">조용히 하세요!</option>
-				<option value="6">나앤</option>
-				<option value="7" selected>기간테스</option>
-			</select>
+			<b>완성된 퍼즐에서 빈 칸의 위치</b>
+			<div style="width: 90%;"><!--
+			--><div class="half"><input type="radio" name="blank-pos" id="blank-pos-top-left"><label for="blank-pos-top-left">왼쪽 위</label></div><!--
+			--><div class="half"><input type="radio" name="blank-pos" id="blank-pos-top-right"><label for="blank-pos-top-right">오른쪽 위</label></div><!--
+			--></div>
+			<div style="width: 90%;"><!--
+			--><div class="half"><input type="radio" name="blank-pos" id="blank-pos-bottom-left" checked><label for="blank-pos-bottom-left">왼쪽 아래</label></div><!--
+			--><div class="half"><input type="radio" name="blank-pos" id="blank-pos-bottom-right"><label for="blank-pos-bottom-right">오른쪽 아래</label></div><!--
+			--></div>
 		</div>
 		<div class="item">
-			<div class="item inline-block" style="width: 49%;text-align: left;">
-				<input type="radio" name="puzzle-type" id="lastorigin-type" checked><label for="lastorigin-type" style="font-weight: bold;">라스트오리진 퍼즐</label>
-				<div>왼쪽 아래가 빈 칸이 됩니다.</div>
-			</div>
-			<div class="item inline-block" style="width: 49%;text-align: left;">
-				<input type="radio" name="puzzle-type" id="classic-type"><label for="classic-type" style="font-weight: bold;">클래식 퍼즐</label>
-				<div>오른쪽 아래가 빈 칸이 됩니다.</div>
-			</div>
-		</div>
-		<div class="item">
-			<div><input type="checkbox" name="" id="show-label" checked><label for="show-label">숫자 보이기</label></div>
-			<div><input type="radio" name="flow" id="flow-phone"><label for="flow-phone" style="font-weight: bold;">휴대폰 넘버패드</label></div>
-			<div><input type="radio" name="flow" id="flow-keypad" checked><label for="flow-keypad" style="font-weight: bold;">키보드 키패드</label></div>
+			<div><b>퍼즐에 숫자 표시하기</b></div>
+			<input type="radio" name="show-label" id="show-label-none" checked><label for="show-label-none">안 함</label>
+			<input type="radio" name="show-label" id="show-label-phone"><label for="show-label-phone">휴대폰</label>
+			<input type="radio" name="show-label" id="show-label-keypad"><label for="show-label-keypad">키패드</label>
 		</div>
 		<div class="item" style="text-align: center;">
-			<button id="apply-setting">설정 적용하기</button><button id="start" disabled>시작하기</button>
+			<button id="apply-setting">설정 적용하기</button><button id="start">시작하기</button>
 		</div>
 	</div>
 	<div class="article" style="text-align: left;">
 		<h2 style="text-align: center;">이게 뭐죠?</h2>
 		<p>모바일 <small>유사</small>게임 라스트오리진의 구성 요소 중 하나인 미니게임 슬라이드 퍼즐을 그대로 구현한 것입니다.</p>
 		<p>개발 당시(2020년 05월) 라스트오리진 2.0의 슬라이드 퍼즐은 3x3 크기 고정, 퍼즐 세트 랜덤, 전투 재진입 시 터치가 먹히지 않는 버그, 패치 다운로드 시 스타크 씨 저 속이 안좋아지는 현상 등의 문제점이 있어 꼬와서 만들어봤습니다.</p>
-		<p><b>그래서 여기 이 슬라이드 퍼즐이 오리지널과 다른 점은 무엇일까요?</b></p>
+		<p><b>특징</b></p>
 		<ul>
-			<li><b>자유롭게 설정할 수 있는 퍼즐 크기</b><br>3x3이 시시한 라붕이 여러분들을 위해 얼마든지 크기를 키울 수 있는 설정을 제공합니다.</li>
-			<li><b>자유롭게 선택할 수 있는 퍼즐셋</b><br>퍼즐셋이 중구난방으로 떠서 옆에 뜨는 스토리를 당췌 이해할 수 없었다고요? 퍼즐셋을 자유롭게 선택할 수 있습니다! 오리지널에 포함된 스토리를 (거의) 그대로 가져와 원작의 감동을 그대로 느낄 수 있습니다. <small>(솔직히 원작 스토리가 궁금하면 그냥 갤에 가십시오.)</small></li>
+			<li><b>커스터마이징 가능</b><br>3x3이 시시하거나 랜덤으로 뜨는 퍼즐이 답답한 라붕이들을 위한 커스터마이징 옵션을 제공합니다. 퍼즐 크기와 빈칸의 위치를 바꿀 수 있고, 퍼즐 셋을 직접 선택할 수 있습니다. 하지만 조각 수만 더럽게 많으면 오히려 노잼이 될 수 있으므로 최대 크기는 9x9까지 설정 가능합니다.</li>
 			<li><b>"슬라이드" 퍼즐</b><br>슬라이드 퍼즐이랍시고 슬라이드를 하면 안 움직이는 오리지널과 달리 조각을 드래그 또는 스와이프하여 퍼즐을 맞출 수 있습니다. 손맛 따위는 옛날에 개나 줘 버린 시점에 원래부터 오토가 없는 퍼즐에서만큼은 손맛을 만끽해 보십시오.<br>물론 오리지널의 감각이 익숙한 라붕이들을 위해 짧은 클릭/터치로도 조각을 움직일 수 있게 했습니다.</li>
 			<li><b>여러 개 무빙치기</b><br>Play 스토어에 마구잡이로 올라온 광고 포함 싸구려 슬라이드 퍼즐 앱들도 지원하는 기능입니다. <small>광고 얘기가 나와서 하는 말인데 이 사이트에는 광고가 전혀 없습니다.</small></li>
-			<li><b>퍼즐 조각 번호 표시</b><br>패치로 추가된 퍼즐셋이 낯설어 쩔쩔맸던 적이 있나요? 퍼즐 조각에 번호를 표시할 수 있습니다. </li>
+			<li><b>퍼즐 조각 번호 표시</b><br>갑자기 조각 수가 늘어나 어리둥절한 라붕이들을 위해 번호 표시 기능을 제공합니다. 하지만 도전하기도 전에 이 기능을 켜면 노잼이 될 수 있으니 주의하세요.</li>
 		</ul>
 	</div>
 	<footer style="padding-top: 50px; padding-bottom: 10px;">

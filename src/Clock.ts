@@ -1,16 +1,16 @@
-export default class Running {
+export default class Clock {
 
-	readonly update: Function;
+	readonly update: (t? : number) => void;
 	private running: boolean = false;
 	private a: FrameRequestCallback = null;
 	private id : number = null;
-	constructor(update : Function) {
+	constructor(update : (t? : number) => void) {
 		this.update = update;
 	}
-	start() {
+	run() {
 		this.running = true;
 		this.a = (t) => {
-			this.update();
+			this.update(t);
 			if (this.running) {
 				this.id = requestAnimationFrame(this.a);
 			}

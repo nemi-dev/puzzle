@@ -8,6 +8,10 @@ app.get('/', (req, res) => {
 	res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
+app.get('/puzzleset.json', (req, res) => {
+	res.sendFile(path.resolve(__dirname, 'puzzleset.json'));
+});
+
 app.get('/app.js', (req, res) => {
 	res.sendFile(path.resolve(__dirname, 'app.js'));
 });

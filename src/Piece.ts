@@ -16,10 +16,11 @@ const AXIS = {
 
 export default class Piece {
 
-	static blankTag = 0
-
 	/** 퍼즐 조각의 번호 */
 	tag : number;
+
+	/** 퍼즐 조각에 실제로 표시될 번호 */
+	label : string;
 
 	/** 퍼즐 조각이 참조할 원본 이미지 */
 	texture : CanvasImageSource;
@@ -52,10 +53,10 @@ export default class Piece {
 	}
 
 	/** 퍼즐 조각의 목표 위치/현재 위치를 기반으로 퍼즐의 행렬 위치를 찾아낸다. */
-	whereami(left : number, top : number, boardSize : number, divideBy : number, flipH : boolean, flipV : boolean) : [number, number] {
+	whereami(left : number, top : number, boardSize : number, divideBy : number) : [number, number] {
 		let x = (this.destX != null? this.destX : this.x) + this.size / 2;
 		let y = (this.destY != null? this.destY : this.y) + this.size / 2;
-		return getRowCol(x, y, boardSize, left, top, divideBy, flipH, flipV)
+		return getRowCol(x, y, boardSize, left, top, divideBy)
 	}
 
 	/** 퍼즐 조각을 한 방향으로 움직인다. (대각선 이동은 구현에 좀 더 정교한 기하학을 필요로 한다.) 다른 퍼즐 조각과 부딪히는 경우 그것도 함께 밀어낸다. 이것은 **한 업데이트 사이클에서 모두 일어난다!** */
@@ -77,7 +78,7 @@ export default class Piece {
 		if (backpress) return backpress;
 
 		for (const piece of concern) {
-			if (Piece.hitTest(this, piece)) {
+			if (Piece.hitTest(this, piece, game.blankTag)) {
 				let dist_ = (this.size  * Math.sign(dist) + this[axis] - piece[axis]);
 				backpress = piece.push(dist_, direction, game, concern);
 				if (backpress != null) {
@@ -90,10 +91,11 @@ export default class Piece {
 		return backpress;
 	}
 
-	/** 업데이트한다. */
+	/** 
+	 * 업데이트한다.  
+	 * 빈칸을 나타내는 조각은 업데이트되지 않는다.
+	*/
 	update(game : Game) {
-
-		if (this.tag == Piece.blankTag) return;
 
 		if (this.destX != null) {
 			let distX = this.destX - this.x;
@@ -138,29 +140,48 @@ export default class Piece {
 		
 	}
 
+	/**
+	 * 렌더링한다.  
+	 * 빈칸을 나타내는 조각에 대해서는 메서드가 아예 실행되지 않는다.
+	 */
 	render(context: CanvasRenderingContext2D, showLabel = true) {
-		if (this.tag != Piece.blankTag) {
-			context.fillStyle = 'white';
-			context.lineWidth = 1;
-			context.strokeRect(this.x, this.y, this.size, this.size);
-			context.fillRect(this.x, this.y, this.size, this.size);
-			context.drawImage(this.texture, this.sx, this.sy, this.srcSize, this.srcSize, this.x, this.y, this.size, this.size);
-			if (showLabel) {
-				context.font = Math.floor(this.size/3) + 'px "Exo 2"';
-				context.lineWidth = 3;
-				const label = this.tag + 1;
-				context.strokeText(label.toString(), this.x + 4, this.y + this.size - 4);
-				context.fillText(label.toString(), this.x + 4, this.y + this.size - 4);
-			}
+		context.fillStyle = 'white';
+		context.lineWidth = 1;
+		context.strokeRect(this.x, this.y, this.size, this.size);
+		context.fillRect(this.x, this.y, this.size, this.size);
+		context.drawImage(this.texture, this.sx, this.sy, this.srcSize, this.srcSize, this.x, this.y, this.size, this.size);
+		
+		if (showLabel) {
+			let fontSize = Math.floor(this.size/3);
+			context.font = fontSize + 'px "Exo 2"';
+			context.lineWidth = 3;
+
+			let { width } = context.measureText(this.label);
+			let x = this.x + width / 2 + 4;
+			let y = this.y + this.size / 6 + 2;
+			
+			context.strokeText(this.label, x, y);
+			context.fillText(this.label, x, y);
 		}
 	}
 
-	
+	getIntoPositionNow() {
+		if ((this.destX != null) && (this.destX != this.x)) {
+			this.x = this.destX;
+			this.destX = null;
+			this.velX = 0;
+		}
+		if ((this.destY != null) && (this.destY != this.destY)) {
+			this.y = this.destY;
+			this.destY = null;
+			this.velY = 0;
+		}
+	}
 	
 	
 
-	static hitTest(a : Piece, b : Piece) : boolean {
-		if (a == b || a.tag == Piece.blankTag || b.tag == Piece.blankTag) return false;
+	static hitTest(a : Piece, b : Piece, blankTag : number) : boolean {
+		if (a == b || a.tag == blankTag || b.tag == blankTag) return false;
 		let leftA = a.x;
 		let rightA = a.x + a.size;
 		let topA = a.y;

@@ -46,6 +46,7 @@ export default class Input {
 	private mouseup : (ev : MouseEvent) => void
 
 	connect (canvas : HTMLCanvasElement, game : Game) {
+		this.disconnect(canvas);
 		this.mousemove = ev => {
 			this.handleMousemove(ev.offsetX, ev.offsetY, game)		
 		};
@@ -130,3 +131,5 @@ export default class Input {
 	}
 
 }
+
+
