@@ -1,7 +1,7 @@
 import Piece from "./Piece";
 import PuzzleSet from "./PuzzleSet";
 import { getRowCol, getPosition } from "./utils";
-import Input from "./Input";
+import { Input, InputListener } from "./Input";
 import { Grab } from "./Grab";
 import Timer from "./Timer";
 
@@ -17,23 +17,24 @@ function selectRealPiece(model : number[], blankTag : number) {
 /** 퍼즐의 해결 가능 여부를 실제로 판단한다. */
 function checkSolvable(model : number[], blankTag : number) {
 	let blankIndex = model.indexOf(blankTag);
-	let countDimension = Math.sqrt(model.length);
+	let size = Math.sqrt(model.length);
 
-	let blankRow = Math.floor( blankIndex / countDimension );
-	let blankCol = blankIndex % countDimension;
-
-	let parity = (blankRow + blankCol) % 2
+	let blankRow = Math.floor( blankIndex / size );
 
 	let inversion = 0;
 	for (let i = 0; i < model.length; i++) {
+		if (model[i] == blankTag) continue;
 		for (let j = i + 1; j < model.length; j++) {
+			if (model[j] == blankTag) continue;
 			if (model[i] > model[j]) inversion++;
 		}
 	}
-	return inversion % 2 == parity
+
+	// return inversion % 2 == parity;
+	return (inversion + ((size%2 == 0)? blankRow + 1 : 0)) % 2 == 0;
 }
 
-export default class Game {
+export default class Game implements InputListener {
 	
 	/**
 	 * 퍼즐의 실제 모델   
@@ -72,7 +73,7 @@ export default class Game {
 	len : number
 
 	/** 한 행 또는 열의 퍼즐 조각의 수 */
-	_num : number
+	_size : number
 
 	/** 이 게임에서 빈 칸에 해당하는 태그 */
 	blankTag : number = 0
@@ -86,9 +87,11 @@ export default class Game {
 	 *  */
 	solvable : boolean
 
-	/** 여기 값들은 실제 객체들에 들어갈 것이지만, 재설정 시에 퍼즐셋을 건드리지 않는다면 이것을 쓴다. */
-	private _puzzleSet : PuzzleSet
-
+	/** 게임 재설정 시 이전 설정을 기억하기 위한 속성 */
+	private _puzzleSet : PuzzleSet;
+	private _bottomBlank = true;
+	private _rightBlank = false;
+	private _upsideDown : boolean;
 
 	/** 입력을 처리하는 컴포넌트 */
 	public readonly input : Input = new Input()
@@ -111,18 +114,18 @@ export default class Game {
 
 	/** 한 행 또는 열의 퍼즐 조각의 수 */
 	get size() {
-		return this._num;
+		return this._size;
 	}
 
 	/** 퍼즐 조각 하나의 변의 길이 */
 	get pieceSize() {
-		return this.len / this._num;
+		return this.len / this._size;
 	}
 
 	/** 현재 빈 칸의 행렬 위치 */
 	get rowColOfBlank() : [number, number] {
 		let i = this.puzzleModel.indexOf(this.blankTag);
-		return [Math.floor(i / this._num), i % this._num];
+		return [Math.floor(i / this._size), i % this._size];
 	}
 
 	constructor(size : number, puzzleSet : PuzzleSet, left : number, top : number, boardSize : number, upsideDown : boolean) {
@@ -131,100 +134,75 @@ export default class Game {
 		this.top = top;
 		this.len = boardSize;
 
-		this._num = size;
+		this._size = size;
+		this._upsideDown = upsideDown;
+		this.setPuzzleSet(puzzleSet);
 
-		this._puzzleSet = puzzleSet;
-		
-		this.init({ size, puzzleSet, upsideDown });
 
 	}
 
-	/** 진행 중인 게임을 중단하고, 퍼즐을 새로운 설정값으로 초기화한다. */
-	init({ size, puzzleSet, upsideDown } : { size? : number, puzzleSet? : PuzzleSet, upsideDown? : boolean } = {} ) {
 
-		this.end(null);
-		if (size == null) size = this._num;
-		this._num = size;
-
-		if (puzzleSet == null) puzzleSet = this._puzzleSet;
-		this._puzzleSet = puzzleSet;
-
-		this.solvable = puzzleSet.solvable;
-
-		const t = size * size;
-		this.puzzleModel = new Array(t);
-		this.pieces = new Array(t);
-
-		const pieceLength = puzzleSet.srcLength / size;
-		for (let tag = 0; tag < t; tag++) {
-			this.puzzleModel[tag] = tag;
-			let row = Math.floor(tag / size);
-			let col = tag % size;
-			let [x, y] = getPosition(row, col, puzzleSet.srcLength, puzzleSet.srcX, puzzleSet.srcY, size);
-			this.pieces[tag] = new Piece(tag, puzzleSet.texture, x, y, pieceLength, this.len / size);
-		}
-		
-		this.assignLabel(upsideDown);
-
-		this.initPiecePosition();
-	}
-
-	/** 생성된 퍼즐 조각에 번호를 처음으로 또는 다시 붙인다. */
+	/**
+	 * 생성된 퍼즐 조각에 번호를 처음으로 또는 다시 붙인다.  
+	 * 번호를 붙이는 것은 게임 초기화를 요구하지 않는다.
+	 * */
 	assignLabel(upsideDown : boolean) {
-		const totalPieces = this._num * this._num;
+		this._upsideDown = upsideDown;
+		const totalPieces = this._size * this._size;
 		for (let tag = 0; tag < totalPieces; tag++) {
-			let vrow = Math.floor(tag / this._num);
-			let vcol = tag % this._num;
-			let lrow = upsideDown? this._num - vrow - 1 : vrow;
-			let label = lrow * this._num + vcol + 1;
+			let vrow = Math.floor(tag / this._size);
+			let vcol = tag % this._size;
+			let lrow = upsideDown? this._size - vrow - 1 : vrow;
+			let label = lrow * this._size + vcol + 1;
 			this.pieces[tag].label = label.toString();
 		}
 	}
 
+	/**
+	 * 퍼즐 크기를 설정한다. 게임 재설정이 요구된다.
+	 */
+	setSize(size : number, bottomBlank : boolean, rightBlank : boolean) {
+		this.end(null);
+		this.timer.reset();
 
-	/** (x, y) 좌표의 행렬 위치를 얻는다. */
-	getRowColAt(x : number, y : number) : [number, number] {
-		return getRowCol(x, y, this.len, this.left, this.top, this._num)
-	}
+		this._size = size;
+		this._bottomBlank = bottomBlank;
+		this._rightBlank = rightBlank;
 
-	/** 지정 행렬 위치에 있는 퍼즐 조각을 얻는다. */
-	getPieceAt(row : number, col : number) : Piece {
-		let foundPosition = col + row * this._num;
-		let foundTag = this.puzzleModel[foundPosition];
-		return this.pieces[foundTag];
-	}
+		const t = size * size;
 
-	/** index번째 행벡터/열벡터를 얻는다. */
-	getVector(index : number, orient : "row" | "col") : Piece[] {
-		let ar : Piece[] = new Array(this._num);
-		let start : number, increment : number;
-		switch (orient) {
-			case "row":
-				start = index * this._num;
-				increment = 1;
-				break;
-			case "col":
-				start = index;
-				increment = this._num;
-				break;
+		this.puzzleModel = new Array(t);
+		this.pieces = new Array(t);
+
+		const pieceLength = this._puzzleSet.srcLength / size;
+		for (let tag = 0; tag < t; tag++) {
+			this.puzzleModel[tag] = tag;
+			let row = Math.floor(tag / size);
+			let col = tag % size;
+			let [x, y] = getPosition(row, col, this._puzzleSet.srcLength, this._puzzleSet.srcX, this._puzzleSet.srcY, size);
+			this.pieces[tag] = new Piece(tag, this._puzzleSet.texture, x, y, pieceLength, this.len / size);
 		}
-		for (let i = 0; i < this._num; i++) {
-			ar[i] = this.pieces[this.puzzleModel[start + increment * i]];
-		}
-		return ar;
-	}
 
-	/** 퍼즐을 완성했을 때 빈 칸의 위치를 설정한다. */
-	setBlankTag(bottom : boolean, right : boolean) {
-		this.blankTag =  (this._num * (this._num - 1)) * Number(bottom) + (this._num - 1) * Number(right);
+		this.blankTag = (this._size * (this._size - 1)) * Number(bottomBlank) + (this._size - 1) * Number(rightBlank);
+		
+		this.assignLabel(this._upsideDown);
+		this.initPiecePosition();
+	}
+	
+	/**
+	 * 퍼즐셋을 변경한다. 참조 범위가 바뀔 수 있으므로 setSize가 후속적으로 호출된다.
+	 */
+	setPuzzleSet(puzzleSet : PuzzleSet) {
+		this._puzzleSet = puzzleSet;
+		this.solvable = puzzleSet.solvable;
+		this.setSize(this._size, this._bottomBlank, this._rightBlank);
 	}
 
 	/** 퍼즐을 섞는다. Game 내에 있는 solvable 속성이 적용된다. */
 	shuffle() {
 
 		this.puzzleModel.sort(() => 0.5 - Math.random());
-
-		let solvable = checkSolvable(this.puzzleModel, this.blankTag);
+		console.log(checkSolvable(this.puzzleModel, this.blankTag));
 		if (checkSolvable(this.puzzleModel, this.blankTag) != this.solvable) {
 			let a = selectRealPiece(this.puzzleModel, this.blankTag);
 			let b : number;
@@ -235,7 +213,8 @@ export default class Game {
 			this.puzzleModel[a] = this.puzzleModel[b];
 			this.puzzleModel[b] = t;
 		}
-		solvable = checkSolvable(this.puzzleModel, this.blankTag);
+		console.log(checkSolvable(this.puzzleModel, this.blankTag));
+
 	}
 
 	/**
@@ -244,8 +223,8 @@ export default class Game {
 	 * */
 	initPiecePosition() {
 
-		const totalPieces = this._num * this._num;
-		const num = this._num;
+		const totalPieces = this._size * this._size;
+		const num = this._size;
 		const len = this.len;
 
 
@@ -260,9 +239,44 @@ export default class Game {
 		}
 	}
 
-	/** rAF에 동기화된 이벤트 핸들 플래그 */
+
+	/** (x, y) 좌표의 행렬 위치를 얻는다. */
+	getRowColAt(x : number, y : number) : [number, number] {
+		return getRowCol(x, y, this.len, this.left, this.top, this._size)
+	}
+
+	/** 지정 행렬 위치에 있는 퍼즐 조각을 얻는다. */
+	getPieceAt(row : number, col : number) : Piece {
+		let foundPosition = col + row * this._size;
+		let foundTag = this.puzzleModel[foundPosition];
+		return this.pieces[foundTag];
+	}
+
+	/** index번째 행벡터/열벡터를 얻는다. */
+	getVector(index : number, orient : "row" | "col") : Piece[] {
+		let ar : Piece[] = new Array(this._size);
+		let start : number, increment : number;
+		switch (orient) {
+			case "row":
+				start = index * this._size;
+				increment = 1;
+				break;
+			case "col":
+				start = index;
+				increment = this._size;
+				break;
+		}
+		for (let i = 0; i < this._size; i++) {
+			ar[i] = this.pieces[this.puzzleModel[start + increment * i]];
+		}
+		return ar;
+	}
+
 	rAFSyncMousedownMessage : boolean = false
+	putMousedownMessage() { this.rAFSyncMousedownMessage = true; }
+
 	rAFSyncMouseupMessage : boolean = false
+	putMouseupMessage() { this.rAFSyncMouseupMessage = true; }
 
 	/** rAF에 동기화된 마우스 클릭 핸들러 */
 	onMousedown() {

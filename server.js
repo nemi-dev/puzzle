@@ -16,6 +16,10 @@ app.get('/app.js', (req, res) => {
 	res.sendFile(path.resolve(__dirname, 'app.js'));
 });
 
+app.get('/hit.wav', (req, res) => {
+	res.sendFile(path.resolve(__dirname, 'hit.wav'));
+});
+
 app.get('/img/:name', (req, res, next) => {
 	if (req.params.name.endsWith('.png')) {
 		res.sendFile(path.resolve(__dirname, 'img', req.params.name))

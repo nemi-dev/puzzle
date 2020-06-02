@@ -5,6 +5,7 @@
   "main": "app.js",
   "dependencies": {
     "express": "^4.17.1",
+    "howler": "^2.2.0",
     "http-errors": "^1.7.3",
     "ts-loader": "^7.0.4",
     "typescript": "^3.9.2"

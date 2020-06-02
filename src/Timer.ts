@@ -53,6 +53,7 @@ export default class Timer {
 	reset() {
 		this.startTime = null;
 		this.endTime = null;
+		this.currentTime = null;
 	}
 
 	update (t : DOMHighResTimeStamp) {

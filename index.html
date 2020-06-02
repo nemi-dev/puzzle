@@ -43,14 +43,12 @@
 		display: inline-block;
 		width: 50%;
 	}
-	canvas {
-		border: 1px solid white;
-	}
 	ul li {
 		margin-bottom: 1em;
 	}
 </style>
 <body>
+	<audio src="hit.wav" id="hit-sound"></audio>
 	<span style="font-family: 'Exo 2';"></span>
 	<div style="text-align: center;">
 		<h1>라스트오리진 아십니까?</h1>
@@ -79,7 +77,7 @@
 			<input type="radio" name="show-label" id="show-label-keypad"><label for="show-label-keypad">키패드</label>
 		</div>
 		<div class="item" style="text-align: center;">
-			<button id="apply-setting">설정 적용하기</button><button id="start">시작하기</button>
+			<button id="start">시작하기</button>
 		</div>
 	</div>
 	<div class="article" style="text-align: left;">

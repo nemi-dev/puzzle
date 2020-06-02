@@ -15,13 +15,19 @@ context.textBaseline = 'middle';
 const sizeInput = document.getElementById('size') as HTMLInputElement;
 const puzzleSelector = document.getElementById('puzzle-selector') as HTMLSelectElement;
 const startButton = document.getElementById('start') as HTMLButtonElement;
-const applyButton = document.getElementById('apply-setting') as HTMLButtonElement;
 
 const blankPositionSelector = {
 	topLeft : document.getElementById('blank-pos-top-left') as HTMLInputElement,
 	topRight : document.getElementById('blank-pos-top-right') as HTMLInputElement,
 	bottomLeft : document.getElementById('blank-pos-bottom-left') as HTMLInputElement,
-	bottomRight : document.getElementById('blank-pos-bottom-right') as HTMLInputElement
+	bottomRight : document.getElementById('blank-pos-bottom-right') as HTMLInputElement,
+}
+
+function decodeBlank() : [boolean, boolean] {
+	return [
+		blankPositionSelector.bottomLeft.checked || blankPositionSelector.bottomRight.checked,
+		blankPositionSelector.topRight.checked || blankPositionSelector.bottomRight.checked
+	]
 }
 
 const labelSelector = {
@@ -61,23 +67,14 @@ async function loadPuzzleSets () {
 }
 
 
-function applySetting() {
-	let puzzleSet : PuzzleSet = puzzleSets[puzzleSelector.value];
-	let size = sizeInput.valueAsNumber;
-	game.init({ size, puzzleSet, upsideDown : labelSelector.keypad.checked });
-
+function setSizeHandler() {
+	game.setSize(sizeInput.valueAsNumber, ...decodeBlank());
 }
-
-
 
 
 loadPuzzleSets().then((p) => {
 	puzzleSets = p;
 
-	
-	applyButton.addEventListener('click', () => {
-		applySetting();
-	})
 	
 	startButton.addEventListener('click', (ev) => {
 		game.shuffle();
@@ -85,16 +82,17 @@ loadPuzzleSets().then((p) => {
 		game.start(ev.timeStamp);
 	});
 
-	function e(bottom : boolean, right : boolean) {
-		return (ev : InputEvent) => {
-			game.setBlankTag(bottom, right);
-		}
-	}
 
-	blankPositionSelector.topLeft.addEventListener('input', e(false, false));
-	blankPositionSelector.topRight.addEventListener('input', e(false, true));
-	blankPositionSelector.bottomLeft.addEventListener('input', e(true, false));
-	blankPositionSelector.bottomRight.addEventListener('input', e(true, true));
+	blankPositionSelector.topLeft.addEventListener('input', setSizeHandler);
+	blankPositionSelector.topRight.addEventListener('input', setSizeHandler);
+	blankPositionSelector.bottomLeft.addEventListener('input', setSizeHandler);
+	blankPositionSelector.bottomRight.addEventListener('input', setSizeHandler);
+
+	sizeInput.addEventListener('change', setSizeHandler);
+
+	puzzleSelector.addEventListener('change', ev => {
+		game.setPuzzleSet(puzzleSets[puzzleSelector.value]);
+	});
 
 	labelSelector.none.addEventListener('input', ev => {
 		game.showLabel = false;
@@ -114,6 +112,7 @@ loadPuzzleSets().then((p) => {
 	let size = sizeInput.valueAsNumber;
 
 	game = new Game(size, puzzleSet, 20, 20, 320, labelSelector.keypad.checked);
+
 	game.input.connect(canvas, game);
 
 	clock = new Clock(t => {
@@ -121,7 +120,6 @@ loadPuzzleSets().then((p) => {
 		game.render(context);
 	});
 	
-	game.setBlankTag(true, false);
 	clock.run();
 });
 

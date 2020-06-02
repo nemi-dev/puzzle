@@ -91,36 +91,50 @@ export default class Piece {
 		return backpress;
 	}
 
+	/**
+	 * 퍼즐 조각을 한 방향으로 움직이기만 한다.
+	 * 위에 것과는 다르게 재귀를 사용하지 않는다.
+	 */
+	move(dist : number, direction : "h" | "v", game : Game, concern : Piece) {
+		const { axis, start, end } = AXIS[direction];
+
+	}
+
 	/** 
 	 * 업데이트한다.  
 	 * 빈칸을 나타내는 조각은 업데이트되지 않는다.
+	 * 
+	 * 일단, 업데이트 자체는 드래그 여부와 상관없이 모든 조각에 대해 항상 실행된다.
 	*/
 	update(game : Game) {
 
+		// (참고 : 마우스 버튼을 누르는 순간 모든 조각의 destX, destY가 null이 되고 velX, velY 또한 0이 되므로 조각을 드래그하는 중에는 이 블록과 저 아래에 destY 블록까지 무시된다.)
+		// 아직 목표 x위치에 도달하지 않았다면
 		if (this.destX != null) {
 			let distX = this.destX - this.x;
+
+			// 목표 위치에 도달할 수 있도록 속도를 설정해준다.
+			this.velX = this.size / 6 * Math.sign(distX);
+			// 조각이 목표에 충분히 가까이 접근했다면 목표 위치에 안착시키고, 속도를 없앤다.
 			if ((Math.abs(distX) < Math.abs(this.velX)) || (Math.abs(distX) < 0.1)) {
 				this.x = this.destX;
 				this.destX = null;
-				if (this.velX >= 3) {
+				if (Math.abs(this.velX) >= 3) {
 					// tick!
 				}
 				this.velX = 0;
-				} else {
-				this.velX = this.size / 6 * Math.sign(distX);
 			}
 		}
 		if (this.destY != null) {
 			let distY = this.destY - this.y;
-			if ((Math.abs(distY) < Math.abs(this.velY)) || (Math.abs(distY) < 0.1)) {
+				this.velY = this.size / 6 * Math.sign(distY);
+				if ((Math.abs(distY) < Math.abs(this.velY)) || (Math.abs(distY) < 0.1)) {
 				this.y = this.destY;
 				this.destY = null;
-				if (this.velY >= 3) {
+				if (Math.abs(this.velY) >= 3) {
 					// tick!
 				}
 				this.velY = 0;
-			} else {
-				this.velY = this.size / 6 * Math.sign(distY);
 			}
 		}
 
@@ -129,13 +143,17 @@ export default class Piece {
 		this.y += this.velY;
 		if (this.x < game.left) {
 			this.x = game.left;
+			this.velX = 0;
 		} else if (this.x + this.size > game.right) {
 			this.x = game.right - this.size;
+			this.velX = 0;
 		}
 		if (this.y < game.top) {
 			this.y = game.top;
+			this.velY = 0;
 		} else if (this.y + this.size > game.bottom) {
 			this.y = game.bottom - this.size;
+			this.velY = 0;
 		}
 		
 	}
@@ -166,19 +184,39 @@ export default class Piece {
 	}
 
 	getIntoPositionNow() {
-		if ((this.destX != null) && (this.destX != this.x)) {
+		if ((this.destX != null)
+		// && (this.destX != this.x)
+		) {
 			this.x = this.destX;
 			this.destX = null;
 			this.velX = 0;
 		}
-		if ((this.destY != null) && (this.destY != this.destY)) {
+		if ((this.destY != null)
+		// && (this.destY != this.destY)
+		) {
 			this.y = this.destY;
 			this.destY = null;
 			this.velY = 0;
 		}
 	}
 	
-	
+	/**
+	 * x에서 x + velX로 또는 y에서 y + velY로 이동하는 경로에 부딪힐 다른 조각들이 있는지 판단한다.
+	 */
+	willHit(concern : Piece[], direction : "h" | "v") : Piece[] {
+		let vector : Piece[] = [];
+
+		if (direction == "h") {
+			for (const piece of concern) {
+				// if (piece.x + piece.size )
+			}
+		} else if (direction == "v") {
+
+		}
+		
+
+		return vector;
+	}	
 
 	static hitTest(a : Piece, b : Piece, blankTag : number) : boolean {
 		if (a == b || a.tag == blankTag || b.tag == blankTag) return false;
