@@ -16,8 +16,9 @@ export class Grab {
 	col: number = null;
 
 	/** 마우스 버튼이 눌리는 그 순간에 현재 퍼즐 조각의 왼쪽 끝에 상대적인 마우스 위치 */
-	pieceOffsetX : number = null;
-	pieceOffsetY :number = null;
+	private pieceOffsetX : number = null;
+	private pieceOffsetY :number = null;
+
 	/**
 	 * 현재 누른 퍼즐 조각과 같은 행 또는 열에 있는 조각들의 모음이다.
 	 * 충돌 테스트는 여기 있는 조각들에 한해서 실행된다.
@@ -56,10 +57,36 @@ export class Grab {
 	onMouseup(m: MouseInputMessage, game: Game) {
 		let { startX, startY, endX, endY, startTime, endTime } = m;
 		let distance = this.moveDirection == 'h'? endX - startX : endY - startY;
-		let isTap = (endTime - startTime < 300) && (Math.abs(distance) < 5) ;
+		/**
+		 * # 탭인지 아닌지 판단하는 기준
+		 * 
+		 * 다음 모두를 만족할 것:
+		 * - 누르기 시간이 특정 수치를 넘지 않음 (기본 권장 시간 : 0.3초)
+		 * - 누적 거리가 특정 길이를 넘기지 않음 (기본 권장 길이 : 10)
+		 * 
+		 * @todo 누적 거리가 아닌 "변위"를 가지고 판단한다. 현재 Input에는 누적 이동거리를 판단할 방법이 없다. 근데 변위를 보고 판단하는 것도 나쁘진 않을듯..?
+		 */
+		let isTap = (endTime - startTime < 300) && (Math.abs(distance) < 10) ;
 		if (isTap) {
 			// 퍼즐 조각을 클릭하기만 한 것이라면 모델에서 조각들을 직접 회전시키고, 뷰를 업데이트한다.
-			
+			this.updateModelThenView(game);
+		} else {
+			// 퍼즐 조각을 물리적으로 움직인 것이라면 영향을 받은 모든 조각들을 바른 위치에 놓은 후, 모델을 업데이트한다.
+			this.updateModelByView(game);
+		}
+
+		// 이제 마우스 놓기 처리가 완전히 끝났을 것이므로 데이터를 정리한다.
+		this.piece = null;
+		this.moveDirection = null;
+		this.concern = null;
+	}
+
+	/**
+	 * 모델을 먼저 바꾸고, 뷰가 모델을 따라도록 한다.
+	 * 이 놈은 마우스를 놓을 때에만 실행되며 마우스 놓기 핸들러와 동등한 것으로 본다.
+	 */
+	updateModelThenView(game : Game) {
+
 			/** 태그의 배열 */
 			const vector : number[] = [];
 
@@ -102,20 +129,11 @@ export class Grab {
 				p.destX = destX;
 				p.destY = destY;
 			}
-		} else {
-			// 퍼즐 조각을 물리적으로 움직인 것이라면 영향을 받은 모든 조각들을 바른 위치에 놓은 후, 모델을 업데이트한다.
-			this.updateModelByView(game);
-		}
-
-		// 이제 마우스 놓기 처리가 완전히 끝났을 것이므로 데이터를 정리한다.
-		this.piece = null;
-		this.moveDirection = null;
-		this.concern = null;
 	}
 
 	/**
 	 * 영향을 받은 퍼즐 조각들의 현재 위치(Piece.prototype.x, Piece.prototype.y)만을 가지고
-	 * 모델을 업데이트한다.
+	 * 모델을 업데이트한다. 이 놈은 마우스를 놓을 때에만 실행되며 마우스 놓기 핸들러와 동등한 것으로 본다.
 	 * @deprecated 속도는 전혀 고려되지 않는다.
 	 */
 	updateModelByView(game : Game) {
@@ -152,9 +170,7 @@ export class Grab {
 		}
 	}
 
-	/**
-	 * 마우스를 누르고 있는 때에 한해 업데이트(rAF)가 발생할 때 호출된다. 즉, 실질적 업데이트와 같다.
-	 */
+	/** 마우스를 누르고 있는 때에 한해 업데이트(rAF)가 발생할 때 호출된다. 즉, 실질적 업데이트와 같다. */
 	update(game: Game, holdInput : Input) {
 		if (this.moveDirection == "h" && holdInput.beforeX != null) {
 			let x = holdInput.x - this.pieceOffsetX;

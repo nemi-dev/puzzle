@@ -108,9 +108,10 @@ loadPuzzleSets().then((p) => {
 	input.connect(canvas, game);
 
 	clock = new Clock(t => {
-		input.pulse();
+		input.dispatch();
 		game.update(t, input);
 		game.render(context);
+		input.pulse();
 	});
 	
 	clock.run();

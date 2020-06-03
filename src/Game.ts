@@ -37,18 +37,6 @@ function checkSolvable(model : number[], blankTag : number) {
 export default class Game implements MouseInputListener {
 	
 	/**
-	 * 퍼즐의 실제 모델   
-	 * 어떠한 경우든 [ 0, 1, ..., n-1 ] 순서가 정답이다.
-	 */
-	puzzleModel : number[]
-
-	/**
-	 * 퍼즐 조각 모음  
-	 * piece[n]은 반드시 n번 퍼즐 조각을 나타낸다. 배열 내에서 퍼즐 조각의 순서는 절대로 바뀌지 않는다.
-	 */
-	pieces : Piece[]
-
-	/**
 	 * 게임 진행 중 여부
 	 *   
 	 * false : 아직 시작 버튼을 누르지 않은 상태. 
@@ -62,7 +50,21 @@ export default class Game implements MouseInputListener {
 	 */
 	playing : boolean = false
 
-	
+	/**
+	 * 퍼즐의 실제 모델   
+	 * 어떠한 경우든 [ 0, 1, ..., n-1 ] 순서가 정답이다.
+	 */
+	puzzleModel : number[]
+
+	/** 한 행 또는 열의 퍼즐 조각의 수 */
+	private _size : number
+
+	/**
+	 * 퍼즐 조각 모음  
+	 * piece[n]은 반드시 n번 퍼즐 조각을 나타낸다. 배열 내에서 퍼즐 조각의 순서는 절대로 바뀌지 않는다.
+	 */
+	pieces : Piece[]
+
 	/** 캔버스에서 퍼즐의 왼쪽 끝 위치 */
 	left : number
 
@@ -71,9 +73,6 @@ export default class Game implements MouseInputListener {
 
 	/** 퍼즐의 변의 길이 */
 	len : number
-
-	/** 한 행 또는 열의 퍼즐 조각의 수 */
-	private _size : number
 
 	/** 이 게임에서 빈 칸에 해당하는 태그 */
 	blankTag : number = 0
@@ -213,11 +212,12 @@ export default class Game implements MouseInputListener {
 			let row = Math.floor(i / num);
 			let col = (i % num);
 
-			this.pieces[tag].x = this.left + col * len / num;
-			this.pieces[tag].y = this.top + row * len / num;
+			let piece = this.pieces[tag];
+			piece.destX = this.left + col * len / num;
+			piece.destY = this.top + row * len / num;
+			piece.getIntoPositionNow();
 		}
 	}
-
 
 	/** (x, y) 좌표의 행렬 위치를 얻는다. */
 	getRowColAt(x : number, y : number) : [number, number] {
@@ -278,26 +278,6 @@ export default class Game implements MouseInputListener {
 
 	private handlePlay : Function = this._noop
 
-	/**
-	 * 매 rAF마다 호출된다.  
-	 * 이게 실행되기 전에 다음 것들이 차례대로 처리된다.
-	 * - input.pulse()
-	 * 	- dispatchMousedown, dispatchMouseup이 메시지 큐의 순서에 따라 모두 처리된다.
-	 * - input에 "현재 상태" 저장됨
-	 * */
-	update(t : DOMHighResTimeStamp, input : Input) {
-
-		this.handlePlay(t);
-
-		if (this.grab.piece) {
-			this.grab.update(this, input);
-		}
-
-		for (const piece of this.pieces) {
-			if (piece.tag != this.blankTag) piece.update(this);
-		}
-		// todo resolveCollision
-	}
 
 	/** 게임을 시작한다. */
 	start(startTime : DOMHighResTimeStamp) {
@@ -332,10 +312,6 @@ export default class Game implements MouseInputListener {
 	 */
 	acceptCoordinate(x : number, y : number) {
 		// 퍼즐 밖 영역을 클릭하면 드래그로 이어지지 않는다.
-		console.log(x < this.left)
-		console.log(x > this.right)
-		console.log(x < this.top)
-		console.log(x > this.bottom)
 		if (x < this.left || x > this.right || y < this.top || y > this.bottom) return false;
 		
 		// 움직일 수 없는 조각을 클릭하면 드래그로 이어지지 않는다.
@@ -347,6 +323,32 @@ export default class Game implements MouseInputListener {
 		return true;
 	}
 
+
+	/**
+	 * 매 rAF마다 호출된다.
+	 * 
+	 * 이게 실행되기 전에 다음 것들이 이 순서대로 실행되었다.
+	 * - input.dispatch()
+	 * 	- dispatchMousedown, dispatchMouseup이 메시지 큐의 순서에 따라 모두 처리되었다.
+	 * - input에 "현재 상태" 저장됨
+	 * 
+	 * 이게 실행되고 나면 다음 것들이 차례로 실행될 것이다.
+	 * - input.pulse()
+	 *  - 현재 값이 이전 값으로(.beforeX, .beforeY) 전이된다.
+	 * */
+	update(t : DOMHighResTimeStamp, input : Input) {
+
+		this.handlePlay(t);
+
+		if (this.grab.piece) {
+			this.grab.update(this, input);
+		}
+
+		for (const piece of this.pieces) {
+			if (piece.tag != this.blankTag) piece.update(this);
+		}
+		// todo resolveCollision
+	}
 
 	/** 그린다. */
 	render(context : CanvasRenderingContext2D) {

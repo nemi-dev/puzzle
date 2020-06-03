@@ -51,7 +51,7 @@ export default class Input {
 	private mousedown = (ev : MouseEvent) => {
 		ev.preventDefault();
 		
-		// todo : acceptCoordinate때문에 listener가 단 하나이어야 한다는 제약이 추가되었다
+		// @todo : acceptCoordinate때문에 listener가 단 하나이어야 한다는 제약이 추가되었다
 		if (this.listener.acceptCoordinate(ev.offsetX, ev.offsetY)) {
 			this.startX = ev.offsetX;
 			this.startY = ev.offsetY;
@@ -59,6 +59,15 @@ export default class Input {
 	
 			this.inputX = this.startX;
 			this.inputY = this.startY;
+
+			/*
+			@todo
+				현재 Input의 mousemove는 "마우스를 누른 채로 움직일 때 실행된다"라고 정의하고 설계되었다.
+				그에 따라 필연적으로 마우스가 눌리는 시점에서 이전의 _beforeX, _beforeY의 값을 무효화시켜야 한다.
+				그런데 여기서 _before값을 무효화시키지 않는 다른 방법이 있을 것인가?
+			*/
+			this._beforeX = null;
+			this._beforeY = null;
 	
 			this.source.addEventListener('mousemove', this.mousemove);
 			document.addEventListener('mouseup', this.mouseup);
@@ -86,7 +95,6 @@ export default class Input {
 	}
 
 	private mouseup = (ev : MouseEvent) => {
-
 		this.messages.push({
 			type : "mouseup",
 
@@ -123,8 +131,8 @@ export default class Input {
 		this.listener = null;
 	}
 
-	/** rAF */
-	pulse() {
+	/** (rAF) 큐에 있는 메시지를 모두 정리한다. */
+	dispatch() {
 		let message : MouseInputMessage;
 		while ((message = this.messages.shift()) != null) {
 			switch (message.type) {
@@ -136,6 +144,10 @@ export default class Input {
 					break;
 			}
 		}
+	}
+
+	/** (rAF) 현재 상태를 이전 상태로 저장해둔다. */
+	pulse() {
 		this._beforeX = this.inputX;
 		this._beforeY = this.inputY;
 	}

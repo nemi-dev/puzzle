@@ -183,26 +183,23 @@ export default class Piece {
 		}
 	}
 
+	/**
+	 * 퍼즐 조각을 목표 위치로 즉시 이동시키고, 속도를 없앤다.
+	 */
 	getIntoPositionNow() {
-		if ((this.destX != null)
-		// && (this.destX != this.x)
-		) {
+		if (this.destX != null) {
 			this.x = this.destX;
 			this.destX = null;
 			this.velX = 0;
 		}
-		if ((this.destY != null)
-		// && (this.destY != this.destY)
-		) {
+		if (this.destY != null) {
 			this.y = this.destY;
 			this.destY = null;
 			this.velY = 0;
 		}
 	}
 	
-	/**
-	 * x에서 x + velX로 또는 y에서 y + velY로 이동하는 경로에 부딪힐 다른 조각들이 있는지 판단한다.
-	 */
+	/** x에서 x + velX로 또는 y에서 y + velY로 이동하는 경로에 부딪힐 다른 조각들이 있는지 판단한다. */
 	willHit(concern : Piece[], direction : "h" | "v") : Piece[] {
 		let vector : Piece[] = [];
 
