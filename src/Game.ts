@@ -1,7 +1,7 @@
 import Piece from "./Piece";
 import PuzzleSet from "./PuzzleSet";
 import { getRowCol, getPosition } from "./utils";
-import { Input, InputListener } from "./Input";
+import Input from "./Input";
 import { Grab } from "./Grab";
 import Timer from "./Timer";
 
@@ -34,7 +34,7 @@ function checkSolvable(model : number[], blankTag : number) {
 	return (inversion + ((size%2 == 0)? blankRow + 1 : 0)) % 2 == 0;
 }
 
-export default class Game implements InputListener {
+export default class Game implements MouseInputListener {
 	
 	/**
 	 * 퍼즐의 실제 모델   
@@ -92,9 +92,6 @@ export default class Game implements InputListener {
 	private _bottomBlank = true;
 	private _rightBlank = false;
 	private _upsideDown : boolean;
-
-	/** 입력을 처리하는 컴포넌트 */
-	public readonly input : Input = new Input()
 
 	/** 퍼즐 조각의 움직임을 컨트롤하는 컴포넌트 */
 	public readonly grab : Grab = new Grab()
@@ -174,12 +171,12 @@ export default class Game implements InputListener {
 		this.puzzleModel = new Array(t);
 		this.pieces = new Array(t);
 
-		const pieceLength = this._puzzleSet.srcLength / size;
+		const pieceLength = this._puzzleSet.size / size;
 		for (let tag = 0; tag < t; tag++) {
 			this.puzzleModel[tag] = tag;
 			let row = Math.floor(tag / size);
 			let col = tag % size;
-			let [x, y] = getPosition(row, col, this._puzzleSet.srcLength, this._puzzleSet.srcX, this._puzzleSet.srcY, size);
+			let [x, y] = getPosition(row, col, this._puzzleSet.size, this._puzzleSet.left, this._puzzleSet.top, size);
 			this.pieces[tag] = new Piece(tag, this._puzzleSet.texture, x, y, pieceLength, this.len / size);
 		}
 
@@ -202,7 +199,6 @@ export default class Game implements InputListener {
 	shuffle() {
 
 		this.puzzleModel.sort(() => 0.5 - Math.random());
-		console.log(checkSolvable(this.puzzleModel, this.blankTag));
 		if (checkSolvable(this.puzzleModel, this.blankTag) != this.solvable) {
 			let a = selectRealPiece(this.puzzleModel, this.blankTag);
 			let b : number;
@@ -213,7 +209,6 @@ export default class Game implements InputListener {
 			this.puzzleModel[a] = this.puzzleModel[b];
 			this.puzzleModel[b] = t;
 		}
-		console.log(checkSolvable(this.puzzleModel, this.blankTag));
 
 	}
 
@@ -272,26 +267,20 @@ export default class Game implements InputListener {
 		return ar;
 	}
 
-	rAFSyncMousedownMessage : boolean = false
-	putMousedownMessage() { this.rAFSyncMousedownMessage = true; }
-
-	rAFSyncMouseupMessage : boolean = false
-	putMouseupMessage() { this.rAFSyncMouseupMessage = true; }
 
 	/** rAF에 동기화된 마우스 클릭 핸들러 */
-	onMousedown() {
-		/* 이 메서드는 반드시 input.handleMousedown() 이후에 호출되므로 이 메서드가 시작하는 시점에서는 input의 모든 속성들이 유효값을 가지고 있다. */
-		this.grab.onMousedown(this.input, this);
+	dispatchMousedown(m : MouseInputMessage) {
+		this.grab.onMousedown(m, this);
 
 		// 아직 제 자리를 못 찾고 헤매는 조각이 있으면 곧바로 destX,destY 값을 적용시켜 즉시 이동한다.
-		for (const piece of this.grab.concern) {
+		for (const piece of this.pieces) {
 			if (piece.tag != this.blankTag) piece.getIntoPositionNow();
 		}
 	}
 
 	/** rAF에 동기화된 마우스 놓기 핸들러 */
-	onMouseup() {
-		this.grab.onMouseup(this.input, this);
+	dispatchMouseup(m : MouseInputMessage) {
+		this.grab.onMouseup(m, this);
 	}
 
 	private _noop () {}
@@ -305,32 +294,23 @@ export default class Game implements InputListener {
 
 	private handlePlay : Function = this._noop
 
-	/** 매 rAF마다 호출된다. */
-	update(t : DOMHighResTimeStamp) {
-		let grab = this.grab;
+	/**
+	 * 매 rAF마다 호출된다.  
+	 * - input.pulse() 는 밖으로 나갔다.  
+	 * - 이게 실행되기 전에 dispatchMousedown, dispatchMouseup이 메시지 큐의 순서에 따라 모두 처리되었다.
+	 * */
+	update(t : DOMHighResTimeStamp, input : Input) {
 
-		this.input.clock();
-		if (this.rAFSyncMousedownMessage) {
-			this.onMousedown();
-			// insert code here
-			this.rAFSyncMousedownMessage = false;
-		}
+		this.handlePlay(t);
 
-		if (grab.piece) {
-			grab.update(this);
-		}
-
-		if (this.rAFSyncMouseupMessage) {
-			this.onMouseup();
-			// insert code here
-			this.rAFSyncMouseupMessage = false;
+		if (this.grab.piece) {
+			this.grab.update(this, input);
 		}
 
 		for (const piece of this.pieces) {
 			if (piece.tag != this.blankTag) piece.update(this);
 		}
 		// todo resolveCollision
-		this.handlePlay(t)
 	}
 
 	/** 게임을 시작한다. */
@@ -366,6 +346,10 @@ export default class Game implements InputListener {
 	 */
 	acceptCoordinate(x : number, y : number) {
 		// 퍼즐 밖 영역을 클릭하면 드래그로 이어지지 않는다.
+		console.log(x < this.left)
+		console.log(x > this.right)
+		console.log(x < this.top)
+		console.log(x > this.bottom)
 		if (x < this.left || x > this.right || y < this.top || y > this.bottom) return false;
 		
 		// 움직일 수 없는 조각을 클릭하면 드래그로 이어지지 않는다.

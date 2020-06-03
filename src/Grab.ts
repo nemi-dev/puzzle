@@ -1,7 +1,7 @@
 import Piece from "./Piece";
-import { Input } from "./Input";
 import Game from "./Game";
 import { getPosition } from "./utils";
+import Input from "./Input";
 
 declare type ModelChange = {[i : number] : number};
 
@@ -16,8 +16,8 @@ export class Grab {
 	col: number = null;
 
 	/** 마우스 버튼이 눌리는 그 순간에 현재 퍼즐 조각의 왼쪽 끝에 상대적인 마우스 위치 */
-	pieceX : number = null;
-	pieceY :number = null;
+	pieceOffsetX : number = null;
+	pieceOffsetY :number = null;
 	/**
 	 * 현재 누른 퍼즐 조각과 같은 행 또는 열에 있는 조각들의 모음이다.
 	 * 충돌 테스트는 여기 있는 조각들에 한해서 실행된다.
@@ -32,9 +32,9 @@ export class Grab {
 	moveDirection: "v" | "h" | null = null;
 
 	/** (rAF-sync) 마우스를 누를 때 실행된다. */
-	onMousedown(input: Input, game: Game) {
+	onMousedown(m: MouseInputMessage, game: Game) {
 		// 여기서는 [blankRow, blankCol] != [row, col]이다. 만약 둘이 같다면 이것은 실행조차 되지 않는다.
-		let { startX: x, startY: y } = input;
+		let { startX: x, startY: y } = m;
 		let [blankRow, blankCol] = game.rowColOfBlank;
 		let [row, col] = game.getRowColAt(x, y);
 		if (blankRow == row) {
@@ -48,20 +48,14 @@ export class Grab {
 		this.row = row;
 		this.col = col;
 		this.piece = game.getPieceAt(row, col);
-		this.pieceX = x - this.piece.x;
-		this.pieceY = y - this.piece.y;
+		this.pieceOffsetX = x - this.piece.x;
+		this.pieceOffsetY = y - this.piece.y;
 	}
 
 	/** (rAF-sync) 마우스를 놓을 때 실행된다. */
-	onMouseup(input: Input, game: Game) {
-		let { startX, startY, endX, endY, moveX, moveY, startTime, endTime } = input;
+	onMouseup(m: MouseInputMessage, game: Game) {
+		let { startX, startY, endX, endY, startTime, endTime } = m;
 		let distance = this.moveDirection == 'h'? endX - startX : endY - startY;
-		// console.log ({ 
-		// 	vx : moveX, 
-		// 	vy : moveY,
-		// 	dt : endTime - startTime,
-		// 	distance
-		// });
 		let isTap = (endTime - startTime < 300) && (Math.abs(distance) < 5) ;
 		if (isTap) {
 			// 퍼즐 조각을 클릭하기만 한 것이라면 모델에서 조각들을 직접 회전시키고, 뷰를 업데이트한다.
@@ -161,16 +155,14 @@ export class Grab {
 	/**
 	 * 마우스를 누르고 있는 때에 한해 업데이트(rAF)가 발생할 때 호출된다. 즉, 실질적 업데이트와 같다.
 	 */
-	update(game: Game) {
-		if (this.moveDirection == "h" && game.input.beforeX != null) {
-			let x = game.input.x - this.pieceX;
+	update(game: Game, holdInput : Input) {
+		if (this.moveDirection == "h" && holdInput.beforeX != null) {
+			let x = holdInput.x - this.pieceOffsetX;
 			this.piece.velX = x - this.piece.x;
-			// this.piece.push(game.input.moveX, 'h', game, this.concern);
 		}
-		else if (this.moveDirection == "v" && game.input.beforeY != null) {
-			let y = game.input.y - this.pieceY;
+		else if (this.moveDirection == "v" && holdInput.beforeY != null) {
+			let y = holdInput.y - this.pieceOffsetY;
 			this.piece.velY = y - this.piece.y;
-			// this.piece.push(game.input.moveY, 'v', game, this.concern);
 		}
 	}
 }

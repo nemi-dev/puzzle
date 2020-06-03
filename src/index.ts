@@ -1,11 +1,12 @@
 import PuzzleSet from './PuzzleSet'
 import Clock from './Clock'
 import Game from './Game'
+import Input from './Input';
 
 let puzzleSets : PuzzleSet[];
 let game : Game;
 let clock : Clock;
-
+let input : Input;
 
 const canvas = document.getElementsByTagName('canvas')[0];
 const context = canvas.getContext('2d');
@@ -38,28 +39,19 @@ const labelSelector = {
 
 
 
-declare interface PuzzleSetData {
-	readonly title : string
-	readonly img : string
-	readonly story : string
-	readonly left : number
-	readonly top : number
-	readonly size : number
-	readonly solvable : boolean
-}
-
 async function loadPuzzleSets () {
 	const puzzleSets : PuzzleSet[] = [];
 	const response = await fetch('puzzleset.json');
-	const puzzleSetDataArray = await response.json() as PuzzleSetData[]
+	
+	const puzzleSetDataArray = await response.json() as PuzzleSet[]
 	for (let i = 0; i < puzzleSetDataArray.length; i++) {
-		const { title, img, left, top, size, solvable, story } = puzzleSetDataArray[i];
-		const puzzleSet = new PuzzleSet(img, left, top, size, solvable, story);
+		const puzzleSet = puzzleSetDataArray[i];
+		(puzzleSet as PuzzleSet & { __proto__ : PuzzleSet }).__proto__ = PuzzleSet.prototype;
 		puzzleSets.push(puzzleSet);
 
 		const selectOption = document.createElement('option');
 		selectOption.value = i.toString();
-		selectOption.innerText = title;
+		selectOption.innerText = puzzleSet.title;
 		puzzleSelector.appendChild(selectOption);
 	}
 	await Promise.all(puzzleSets.map(v => v.waitForImageLoad()));
@@ -112,19 +104,15 @@ loadPuzzleSets().then((p) => {
 	let size = sizeInput.valueAsNumber;
 
 	game = new Game(size, puzzleSet, 20, 20, 320, labelSelector.keypad.checked);
-
-	game.input.connect(canvas, game);
+	input = new Input();
+	input.connect(canvas, game);
 
 	clock = new Clock(t => {
-		game.update(t);
+		input.pulse();
+		game.update(t, input);
 		game.render(context);
 	});
 	
 	clock.run();
 });
-
-
-
-
-
 

@@ -1,0 +1,43 @@
+
+body {
+	margin: 0;
+	color: white;
+	background-color: rgb(41, 43, 44);
+}
+body, button, select {
+	font-family: "Noto Sans KR";
+}
+input {
+	font-family: 'Exo 2';
+	text-align: center;
+}
+.inline-block {
+	display: inline-block;
+}
+div.box {
+	width: calc(30% + 200px);
+	min-width: 360px;
+	margin: auto;
+	padding: 0 1em;
+	box-sizing: border-box;
+	border: 1px solid #b4b4b4;
+	border-radius: 30px;
+}
+div.item {
+	margin: 1em 0;
+}
+div.article {
+	width : calc(1280px - 20vw);
+	max-width: calc(100vw - 2em);
+	margin: auto;
+}
+div.half {
+	display: inline-block;
+	width: 50%;
+}
+ul {
+	padding-inline-start: 20px;
+}
+ul li {
+	margin-bottom: 1em;
+}

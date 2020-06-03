@@ -68,12 +68,23 @@ export default class Timer {
 		let p = len / 8;
 		let q = d * 7 / 8;
 		
+		context.lineWidth = 5;
+
+		context.strokeText(min, left + p, y);
 		context.fillText(min, left + p, y);
-		context.fillText(':', left + q, y);
+
+		context.strokeText('\'', left + q, y);
+		context.fillText('\'', left + q, y);
+
+		context.strokeText(sec, left + d + p , y);
 		context.fillText(sec, left + d + p , y);
-		context.fillText('\'', left + d + q , y);
+
+		context.strokeText('"', left + d + q , y);
+		context.fillText('"', left + d + q , y);
+
+		context.strokeText(cs, left + d * 2 + p, y);
 		context.fillText(cs, left + d * 2 + p, y);
-		context.fillText('"', left + d * 2 + q, y);
+
 	}
 
 }

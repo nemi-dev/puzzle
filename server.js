@@ -3,24 +3,30 @@ const httpError = require('http-errors');
 
 const path = require('path');
 const app = express();
+const router = express.Router();
 
-app.get('/', (req, res) => {
+router.get('/', (req, res) => {
 	res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
-app.get('/puzzleset.json', (req, res) => {
+router.get('/style.css', (req, res) => {
+	res.sendFile(path.resolve(__dirname, 'style.css'));
+});
+
+
+router.get('/puzzleset.json', (req, res) => {
 	res.sendFile(path.resolve(__dirname, 'puzzleset.json'));
 });
 
-app.get('/app.js', (req, res) => {
+router.get('/app.js', (req, res) => {
 	res.sendFile(path.resolve(__dirname, 'app.js'));
 });
 
-app.get('/hit.wav', (req, res) => {
+router.get('/hit.wav', (req, res) => {
 	res.sendFile(path.resolve(__dirname, 'hit.wav'));
 });
 
-app.get('/img/:name', (req, res, next) => {
+router.get('/img/:name', (req, res, next) => {
 	if (req.params.name.endsWith('.png')) {
 		res.sendFile(path.resolve(__dirname, 'img', req.params.name))
 	} else {
@@ -28,8 +34,10 @@ app.get('/img/:name', (req, res, next) => {
 	}
 });
 
-app.use((err, req, res, next) => {
+router.use((err, req, res, next) => {
 	res.send(`${err.statusCode} ${err.message}`);
 });
+
+app.use('/', router);
 
 app.listen(8000);
