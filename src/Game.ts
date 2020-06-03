@@ -73,7 +73,7 @@ export default class Game implements MouseInputListener {
 	len : number
 
 	/** 한 행 또는 열의 퍼즐 조각의 수 */
-	_size : number
+	private _size : number
 
 	/** 이 게임에서 빈 칸에 해당하는 태그 */
 	blankTag : number = 0
@@ -100,24 +100,16 @@ export default class Game implements MouseInputListener {
 	public readonly timer : Timer = new Timer();
 
 	/** 캔버스에서 퍼즐의 오른쪽 끝 위치 */
-	get right () {
-		return this.left + this.len;
-	}
+	get right () { return this.left + this.len; }
 
 	/** 캔버스에서 퍼즐의 아래쪽 끝 위치 */
-	get bottom () {
-		return this.top + this.len;
-	}
+	get bottom () { return this.top + this.len; }
 
 	/** 한 행 또는 열의 퍼즐 조각의 수 */
-	get size() {
-		return this._size;
-	}
+	get size() { return this._size; }
 
 	/** 퍼즐 조각 하나의 변의 길이 */
-	get pieceSize() {
-		return this.len / this._size;
-	}
+	get pieceSize() { return this.len / this._size; }
 
 	/** 현재 빈 칸의 행렬 위치 */
 	get rowColOfBlank() : [number, number] {
@@ -134,7 +126,6 @@ export default class Game implements MouseInputListener {
 		this._size = size;
 		this._upsideDown = upsideDown;
 		this.setPuzzleSet(puzzleSet);
-
 
 	}
 
@@ -155,9 +146,7 @@ export default class Game implements MouseInputListener {
 		}
 	}
 
-	/**
-	 * 퍼즐 크기를 설정한다. 게임 재설정이 요구된다.
-	 */
+	/** 퍼즐 크기를 설정한다. 게임 재설정이 요구된다. */
 	setSize(size : number, bottomBlank : boolean, rightBlank : boolean) {
 		this.end(null);
 		this.timer.reset();
@@ -186,9 +175,7 @@ export default class Game implements MouseInputListener {
 		this.initPiecePosition();
 	}
 	
-	/**
-	 * 퍼즐셋을 변경한다. 참조 범위가 바뀔 수 있으므로 setSize가 후속적으로 호출된다.
-	 */
+	/** 퍼즐셋을 변경한다. 참조 범위가 바뀔 수 있으므로 setSize가 후속적으로 실행된다. */
 	setPuzzleSet(puzzleSet : PuzzleSet) {
 		this._puzzleSet = puzzleSet;
 		this.solvable = puzzleSet.solvable;
@@ -197,7 +184,6 @@ export default class Game implements MouseInputListener {
 
 	/** 퍼즐을 섞는다. Game 내에 있는 solvable 속성이 적용된다. */
 	shuffle() {
-
 		this.puzzleModel.sort(() => 0.5 - Math.random());
 		if (checkSolvable(this.puzzleModel, this.blankTag) != this.solvable) {
 			let a = selectRealPiece(this.puzzleModel, this.blankTag);
@@ -209,7 +195,6 @@ export default class Game implements MouseInputListener {
 			this.puzzleModel[a] = this.puzzleModel[b];
 			this.puzzleModel[b] = t;
 		}
-
 	}
 
 	/**
@@ -221,7 +206,6 @@ export default class Game implements MouseInputListener {
 		const totalPieces = this._size * this._size;
 		const num = this._size;
 		const len = this.len;
-
 
 		for (let i = 0; i < totalPieces; i++) {
 			const tag = this.puzzleModel[i];
@@ -296,8 +280,10 @@ export default class Game implements MouseInputListener {
 
 	/**
 	 * 매 rAF마다 호출된다.  
-	 * - input.pulse() 는 밖으로 나갔다.  
-	 * - 이게 실행되기 전에 dispatchMousedown, dispatchMouseup이 메시지 큐의 순서에 따라 모두 처리되었다.
+	 * 이게 실행되기 전에 다음 것들이 차례대로 처리된다.
+	 * - input.pulse()
+	 * 	- dispatchMousedown, dispatchMouseup이 메시지 큐의 순서에 따라 모두 처리된다.
+	 * - input에 "현재 상태" 저장됨
 	 * */
 	update(t : DOMHighResTimeStamp, input : Input) {
 

@@ -1,12 +1,17 @@
-
 /**
- * DOM 이벤트를 이용하여 마우스 입력을 받아들이는 컴포넌트
- * 이벤트 루프가 rAF보다 훨씬 빈번하게 일어나므로 입력값을 rAF-synchronize시키는 기능도 있다.
+ * DOM 이벤트를 이용하여 마우스 입력을 받아들이는 컴포넌트였는데요, 이제 독립 객체가 되었다.  
+ * 이 클래스는 requestAnimationFrame()을 사용한 업데이트 패턴에 특화된 구조를 가지고 있다.  
+ * 중요하고 양이 비교적 적은 이벤트(마우스 누름, 마우스 놓음)는 매 이벤트 루프마다 놓치지 않고 캡쳐해 두고, 압도적으로 많이 발생하고 중요하지 않은 이벤트(마우스 움직임)는 변화에 따라 "현재 상태"와 "직전 상태"만을 저장해 두고 rAF에서 그 상태를 참조하도록 하고 있다.
  */
 export default class Input {
 
+	/** 이벤트를 발생시키는 HTML 엘리먼트 */
 	private source : HTMLElement;
+
+	/** 발생한 이벤트를 실제로 처리할 어떤 모델 또는 객체 */
 	private listener : MouseInputListener;
+
+	/** 중요 이벤트(마우스 누름, 마우스 놓음)를 저장한 큐 */
 	private readonly messages : MouseInputMessage[] = [];
 
 	/**
