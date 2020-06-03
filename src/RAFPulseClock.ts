@@ -1,25 +1,29 @@
-export default class Clock {
+export default class RAFPulseClock {
 
-	readonly update: (t? : number) => void;
+	readonly update: FrameRequestCallback;
+
 	private running: boolean = false;
+
 	private a: FrameRequestCallback = null;
-	private id : number = null;
-	constructor(update : (t? : number) => void) {
+
+	constructor(update : FrameRequestCallback) {
 		this.update = update;
 	}
+
 	run() {
 		this.running = true;
 		this.a = (t) => {
 			this.update(t);
 			if (this.running) {
-				this.id = requestAnimationFrame(this.a);
+				requestAnimationFrame(this.a);
 			}
 		};
-		this.id = requestAnimationFrame(this.a);
+		requestAnimationFrame(this.a);
 	}
+
 	stop() {
 		this.running = false;
-		cancelAnimationFrame(this.id);
 		this.a = null;
 	}
+
 }

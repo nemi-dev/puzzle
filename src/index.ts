@@ -1,11 +1,11 @@
 import PuzzleSet from './PuzzleSet'
-import Clock from './Clock'
+import RAFPulseClock from './RAFPulseClock'
 import Game from './Game'
 import Input from './Input';
 
 let puzzleSets : PuzzleSet[];
 let game : Game;
-let clock : Clock;
+let clock : RAFPulseClock;
 let input : Input;
 
 const canvas = document.getElementsByTagName('canvas')[0];
@@ -107,7 +107,7 @@ loadPuzzleSets().then((p) => {
 	input = new Input();
 	input.connect(canvas, game);
 
-	clock = new Clock(t => {
+	clock = new RAFPulseClock(t => {
 		input.dispatch();
 		game.update(t, input);
 		game.render(context);
