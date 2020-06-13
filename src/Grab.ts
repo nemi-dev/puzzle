@@ -1,12 +1,13 @@
 import Piece from "./Piece";
 import Game from "./Game";
 import { getPosition } from "./utils";
-import Input from "./Input";
+import MouseInput from "./Input";
+import Physical from "./Physical";
 
 declare type ModelChange = {[i : number] : number};
 
-
-export class Grab {
+/** 현재 누른 퍼즐 조각과 그 주변 조각에 대한 정보를 가지고 있다. */
+export default class Grab {
 
 	/** 현재 누른 퍼즐 조각 */
 	piece: Piece = null;
@@ -49,8 +50,8 @@ export class Grab {
 		this.row = row;
 		this.col = col;
 		this.piece = game.getPieceAt(row, col);
-		this.pieceOffsetX = x - this.piece.x;
-		this.pieceOffsetY = y - this.piece.y;
+		this.pieceOffsetX = x - this.piece.phy.x;
+		this.pieceOffsetY = y - this.piece.phy.y;
 	}
 
 	/** (rAF-sync) 마우스를 놓을 때 실행된다. */
@@ -62,9 +63,14 @@ export class Grab {
 		 * 
 		 * 다음 모두를 만족할 것:
 		 * - 누르기 시간이 특정 수치를 넘지 않음 (기본 권장 시간 : 0.3초)
-		 * - 누적 거리가 특정 길이를 넘기지 않음 (기본 권장 길이 : 10)
+		 * - 변위가 특정 길이를 넘기지 않음 (기본 권장 길이 : 10)
 		 * 
-		 * @todo 누적 거리가 아닌 "변위"를 가지고 판단한다. 현재 Input에는 누적 이동거리를 판단할 방법이 없다. 근데 변위를 보고 판단하는 것도 나쁘진 않을듯..?
+		 * ### 변위이어도 되나?
+		 * 
+		 * 변위가 아닌 "누적 거리"로 판단하고자 한다면..  
+		 * 일단 일반적으로는 탭으로 판정되지 않을 만큼의 거리를 짧은 시간 안에 움직이는 것이 어렵다. 제한 거리의 값이 합리적이라면 말이지.
+		 * 실제로 그렇게 하는 놈이 나온다면 그것은 기계적으로 마우스를 임의 조작한 것이라 판단한다.
+		 * 그런 놈들을 상대하기 위해 누적 거리를 재느니 더 간단하게 계산할 수 있는 변위를 가지고 판단하겠다.
 		 */
 		let isTap = (endTime - startTime < 300) && (Math.abs(distance) < 10) ;
 		if (isTap) {
@@ -171,14 +177,64 @@ export class Grab {
 	}
 
 	/** 마우스를 누르고 있는 때에 한해 업데이트(rAF)가 발생할 때 호출된다. 즉, 실질적 업데이트와 같다. */
-	update(game: Game, holdInput : Input) {
+	update(game: Game, holdInput : MouseInput) {
 		if (this.moveDirection == "h" && holdInput.beforeX != null) {
 			let x = holdInput.x - this.pieceOffsetX;
-			this.piece.velX = x - this.piece.x;
+			this.piece.phy.velX = x - this.piece.phy.x;
 		}
 		else if (this.moveDirection == "v" && holdInput.beforeY != null) {
 			let y = holdInput.y - this.pieceOffsetY;
-			this.piece.velY = y - this.piece.y;
+			this.piece.phy.velY = y - this.piece.phy.y;
+		}
+	}
+
+	/**
+	 * 현재 concern에 대하여 충돌 해결을 한 번 한다. 충돌이 있는 경우 틀림없이 미래가 바뀌며, true가 반환된다.
+	 * 이것을 실행한다고 해서 미래에도 충돌이 없으리란 법이 없으므로, 외부에서 이것을 무한히 실행하는 것밖에 답이 없다.
+	 * */
+	private resolveCollisionOnce(future : Physical[]) {
+		let hit = false;
+		let count = this.concern.length;
+		for (let a = 0; a < count; a++) {
+			const A = this.concern[a].phy;
+			for (let b = a + 1; b < count; b++) {
+				const B = this.concern[b].phy;
+				if (A.willHit(B, this.moveDirection)) {
+					hit = true;
+					const futureA = future[a];
+					const futureB = future[b];
+
+					const pos = this.moveDirection == "h"? "x" : "y";
+					const vel = this.moveDirection == "h"? "velX" : "velY";
+
+					// 끝점을 얻는다.
+					let endpointA = A.x < B.x? A.x + A.size : A.x;
+					let endpointB = A.x < B.x? B.x : B.x + B.size;
+
+					// 두 끝점의 거리를 얻는다.
+					let distance = Math.abs(endpointA - endpointB);
+
+					// 그런데 아직까진 모든 조각의 size가 같으므로 이를 단순화할 수 있다.
+					// let distance = Math.abs(A.x - B.x - A.size);
+
+					// 충돌하기까지 걸린 시간을 얻는다.
+					// 단위는 rAF 간의 시간인 것으로 한다.
+					let t = distance / Math.abs(A[vel] - B[vel]);
+
+					// 충돌 포인트를 얻는다.
+					let hitpoint = endpointA + t * A[vel];
+				}
+				
+			}
+		}
+		return hit;
+	}
+
+	/**  */
+	resolveCollision() {
+		let future : Physical[] = [];
+		for (let i = 0; i < this.concern.length; i++) {
+			future[i] = new Physical();
 		}
 	}
 }

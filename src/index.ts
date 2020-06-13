@@ -1,12 +1,11 @@
 import PuzzleSet from './PuzzleSet'
 import RAFPulseClock from './RAFPulseClock'
 import Game from './Game'
-import Input from './Input';
+import MouseInput from './Input';
 
-let puzzleSets : PuzzleSet[];
 let game : Game;
 let clock : RAFPulseClock;
-let input : Input;
+let input : MouseInput;
 
 const canvas = document.getElementsByTagName('canvas')[0];
 const context = canvas.getContext('2d');
@@ -64,8 +63,7 @@ function setSizeHandler() {
 }
 
 
-loadPuzzleSets().then((p) => {
-	puzzleSets = p;
+loadPuzzleSets().then((puzzleSets) => {
 
 	
 	startButton.addEventListener('click', (ev) => {
@@ -104,14 +102,13 @@ loadPuzzleSets().then((p) => {
 	let size = sizeInput.valueAsNumber;
 
 	game = new Game(size, puzzleSet, 20, 20, 320, labelSelector.keypad.checked);
-	input = new Input();
+	input = new MouseInput();
 	input.connect(canvas, game);
 
 	clock = new RAFPulseClock(t => {
-		input.dispatch();
+		input.update();
 		game.update(t, input);
 		game.render(context);
-		input.pulse();
 	});
 	
 	clock.run();

@@ -19,10 +19,6 @@ declare interface MouseInputMessage {
 	endX? : number
 	endY? : number
 	endTime? : DOMHighResTimeStamp
-
-	x? : number
-	y? : number
-	t? : DOMHighResTimeStamp
 }
 
 

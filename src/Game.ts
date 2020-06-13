@@ -1,8 +1,8 @@
 import Piece from "./Piece";
 import PuzzleSet from "./PuzzleSet";
 import { getRowCol, getPosition } from "./utils";
-import Input from "./Input";
-import { Grab } from "./Grab";
+import MouseInput from "./Input";
+import Grab from "./Grab";
 import Timer from "./Timer";
 
 
@@ -336,7 +336,7 @@ export default class Game implements MouseInputListener {
 	 * - input.pulse()
 	 *  - 현재 값이 이전 값으로(.beforeX, .beforeY) 전이된다.
 	 * */
-	update(t : DOMHighResTimeStamp, input : Input) {
+	update(t : DOMHighResTimeStamp, input : MouseInput) {
 
 		this.handlePlay(t);
 
