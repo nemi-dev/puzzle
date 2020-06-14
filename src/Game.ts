@@ -90,13 +90,16 @@ export default class Game implements MouseInputListener {
 	private _puzzleSet : PuzzleSet;
 	private _bottomBlank = true;
 	private _rightBlank = false;
-	private _upsideDown : boolean;
+	private _upsideDown  = false;
 
 	/** 퍼즐 조각의 움직임을 컨트롤하는 컴포넌트 */
 	public readonly grab : Grab = new Grab()
 
 	/** 플레이 타임을 관리하는 컴포넌트 */
-	public readonly timer : Timer = new Timer();
+	public readonly timer : Timer;
+
+	readonly viewWidth : number
+	readonly viewHeight : number
 
 	/** 캔버스에서 퍼즐의 오른쪽 끝 위치 */
 	get right () { return this.left + this.len; }
@@ -116,14 +119,22 @@ export default class Game implements MouseInputListener {
 		return [Math.floor(i / this._size), i % this._size];
 	}
 
-	constructor(size : number, puzzleSet : PuzzleSet, left : number, top : number, boardSize : number, upsideDown : boolean) {
+	constructor(size : number, puzzleSet : PuzzleSet, left : number, top : number, len : number, timerHeight : number) {
 		
 		this.left = left;
 		this.top = top;
-		this.len = boardSize;
+		this.len = len;
 
+		this.timer = new Timer();
+		this.timer.y = top * 2 + len + timerHeight / 2;
+		this.timer.fontSize = timerHeight * 5 / 12
+		
+		this.timer.left = left;
+		this.timer.width = len;
+
+		this.viewWidth = left * 2 + len;
+		this.viewHeight = top * 2 + len + timerHeight;
 		this._size = size;
-		this._upsideDown = upsideDown;
 		this.setPuzzleSet(puzzleSet);
 
 	}
@@ -301,9 +312,18 @@ export default class Game implements MouseInputListener {
 		return true;
 	}
 
+	/**
+	 * 퍼즐을 완성했을 때 실행시킬 외부 콜백 목록  
+	 * 왜 콜백을 외부에서 받는지는 모르겠지만, 아무튼 쓰고싶은 함수가 외부에 있다고!!
+	 * */
+	readonly completeHandlers : Function[] = []
+
 	/** 퍼즐을 완성했을 때 실행된다. */
 	onComplete(t : DOMHighResTimeStamp) {
 		this.end(t);
+		for (const cb of this.completeHandlers) {
+			cb();
+		}
 	}
 	
 	/**
@@ -337,7 +357,6 @@ export default class Game implements MouseInputListener {
 	 *  - 현재 값이 이전 값으로(.beforeX, .beforeY) 전이된다.
 	 * */
 	update(t : DOMHighResTimeStamp, input : MouseInput) {
-
 		this.handlePlay(t);
 
 		if (this.grab.piece) {
@@ -347,16 +366,16 @@ export default class Game implements MouseInputListener {
 		for (const piece of this.pieces) {
 			if (piece.tag != this.blankTag) piece.update(this);
 		}
-		// todo resolveCollision
+		
 	}
 
 	/** 그린다. */
 	render(context : CanvasRenderingContext2D) {
-		context.clearRect(0, 0, 360, 480);
+		context.clearRect(0, 0, this.viewWidth, this.viewHeight);
 		for (const piece of this.pieces) {
 			if (piece.tag != this.blankTag) piece.render(context, this.showLabel);
 		}
-		this.timer.render(context, this.left, this.len, 420);
+		this.timer.render(context);
 	}
 
 }

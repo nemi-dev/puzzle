@@ -1,6 +1,5 @@
 import { getRowCol } from "./utils";
 import Game from "./Game";
-import Physical from "./Physical";
 
 const AXIS = {
 	h : {
@@ -15,7 +14,7 @@ const AXIS = {
 	}
 }
 
-export default class Piece {
+export default class Piece implements Physical {
 
 	/** 퍼즐 조각의 번호 */
 	tag : number;
@@ -31,20 +30,19 @@ export default class Piece {
 	sy : number;
 	srcSize : number;
 
-	// /** 퍼즐 조각의 한 변의 길이 */
-	// size : number;
+	/** 퍼즐 조각의 한 변의 길이 */
+	size : number;
 
-	// /** 퍼즐 상에서 퍼즐 조각의 완쪽 끝 위치 */
-	// x : number;
+	/** 퍼즐 상에서 퍼즐 조각의 완쪽 끝 위치 */
+	x : number;
 
-	// /** 퍼즐 상에서 퍼즐 조각의 위쪽 끝 위치 */
-	// y : number;
+	/** 퍼즐 상에서 퍼즐 조각의 위쪽 끝 위치 */
+	y : number;
 
-	// /** 퍼즐 조각의 이동 속도 (업데이트에 이용된다. 아님 말고.) */
-	// velX : number = 0;
-	// velY : number = 0;
+	/** 퍼즐 조각의 이동 속도 (업데이트에 이용된다. 아님 말고.) */
+	velX : number = 0;
+	velY : number = 0;
 
-	readonly phy = new Physical();
 	/** 퍼즐 조각이 혼자서 움직일 때 (마우스를 놓을 때) 퍼즐 조각이 이동하는 경로 */
 	destX : number = null;
 	destY : number = null;
@@ -55,13 +53,13 @@ export default class Piece {
 		this.sx = srcX;
 		this.sy = srcY;
 		this.srcSize = srcD;
-		this.phy.size = viewD;
+		this.size = viewD;
 	}
 
 	/** 퍼즐 조각의 목표 위치/현재 위치를 기반으로 퍼즐의 행렬 위치를 찾아낸다. */
 	whereami(left : number, top : number, boardSize : number, divideBy : number) : [number, number] {
-		let x = (this.destX != null? this.destX : this.phy.x) + this.phy.size / 2;
-		let y = (this.destY != null? this.destY : this.phy.y) + this.phy.size / 2;
+		let x = (this.destX != null? this.destX : this.x) + this.size / 2;
+		let y = (this.destY != null? this.destY : this.y) + this.size / 2;
 		return getRowCol(x, y, boardSize, left, top, divideBy)
 	}
 
@@ -85,49 +83,49 @@ export default class Piece {
 		// (참고 : 마우스 버튼을 누르는 순간 모든 조각의 destX, destY가 null이 되고 velX, velY 또한 0이 되므로 조각을 드래그하는 중에는 이 블록과 저 아래에 destY 블록까지 무시된다.)
 		// 아직 목표 x위치에 도달하지 않았다면
 		if (this.destX != null) {
-			let distX = this.destX - this.phy.x;
+			let distX = this.destX - this.x;
 
 			// 목표 위치에 도달할 수 있도록 속도를 설정해준다.
-			this.phy.velX = this.phy.size / 6 * Math.sign(distX);
+			this.velX = this.size / 6 * Math.sign(distX);
 			// 조각이 목표에 충분히 가까이 접근했다면 목표 위치에 안착시키고, 속도를 없앤다.
-			if ((Math.abs(distX) < Math.abs(this.phy.velX)) || (Math.abs(distX) < 0.1)) {
-				this.phy.x = this.destX;
+			if ((Math.abs(distX) < Math.abs(this.velX)) || (Math.abs(distX) < 0.1)) {
+				this.x = this.destX;
 				this.destX = null;
-				if (Math.abs(this.phy.velX) >= 3) {
+				if (Math.abs(this.velX) >= 3) {
 					// tick!
 				}
-				this.phy.velX = 0;
+				this.velX = 0;
 			}
 		}
 		if (this.destY != null) {
-			let distY = this.destY - this.phy.y;
-				this.phy.velY = this.phy.size / 6 * Math.sign(distY);
-				if ((Math.abs(distY) < Math.abs(this.phy.velY)) || (Math.abs(distY) < 0.1)) {
-				this.phy.y = this.destY;
+			let distY = this.destY - this.y;
+				this.velY = this.size / 6 * Math.sign(distY);
+				if ((Math.abs(distY) < Math.abs(this.velY)) || (Math.abs(distY) < 0.1)) {
+				this.y = this.destY;
 				this.destY = null;
-				if (Math.abs(this.phy.velY) >= 3) {
+				if (Math.abs(this.velY) >= 3) {
 					// tick!
 				}
-				this.phy.velY = 0;
+				this.velY = 0;
 			}
 		}
 
 
-		this.phy.x += this.phy.velX;
-		this.phy.y += this.phy.velY;
-		if (this.phy.x < game.left) {
-			this.phy.x = game.left;
-			this.phy.velX = 0;
-		} else if (this.phy.x + this.phy.size > game.right) {
-			this.phy.x = game.right - this.phy.size;
-			this.phy.velX = 0;
+		this.x += this.velX;
+		this.y += this.velY;
+		if (this.x < game.left) {
+			this.x = game.left;
+			this.velX = 0;
+		} else if (this.x + this.size > game.right) {
+			this.x = game.right - this.size;
+			this.velX = 0;
 		}
-		if (this.phy.y < game.top) {
-			this.phy.y = game.top;
-			this.phy.velY = 0;
-		} else if (this.phy.y + this.phy.size > game.bottom) {
-			this.phy.y = game.bottom - this.phy.size;
-			this.phy.velY = 0;
+		if (this.y < game.top) {
+			this.y = game.top;
+			this.velY = 0;
+		} else if (this.y + this.size > game.bottom) {
+			this.y = game.bottom - this.size;
+			this.velY = 0;
 		}
 		
 	}
@@ -139,18 +137,18 @@ export default class Piece {
 	render(context: CanvasRenderingContext2D, showLabel = true) {
 		context.fillStyle = 'white';
 		context.lineWidth = 1;
-		context.strokeRect(this.phy.x, this.phy.y, this.phy.size, this.phy.size);
-		context.fillRect(this.phy.x, this.phy.y, this.phy.size, this.phy.size);
-		context.drawImage(this.texture, this.sx, this.sy, this.srcSize, this.srcSize, this.phy.x, this.phy.y, this.phy.size, this.phy.size);
+		context.strokeRect(this.x, this.y, this.size, this.size);
+		context.fillRect(this.x, this.y, this.size, this.size);
+		context.drawImage(this.texture, this.sx, this.sy, this.srcSize, this.srcSize, this.x, this.y, this.size, this.size);
 		
 		if (showLabel) {
-			let fontSize = Math.floor(this.phy.size/3);
+			let fontSize = Math.floor(this.size/3);
 			context.font = fontSize + 'px "Exo 2"';
 			context.lineWidth = 3;
 
 			let { width } = context.measureText(this.label);
-			let x = this.phy.x + width / 2 + 4;
-			let y = this.phy.y + this.phy.size / 6 + 2;
+			let x = this.x + width / 2 + 4;
+			let y = this.y + this.size / 6 + 2;
 			
 			context.strokeText(this.label, x, y);
 			context.fillText(this.label, x, y);
@@ -162,14 +160,14 @@ export default class Piece {
 	 */
 	getIntoPositionNow() {
 		if (this.destX != null) {
-			this.phy.x = this.destX;
+			this.x = this.destX;
 			this.destX = null;
-			this.phy.velX = 0;
+			this.velX = 0;
 		}
 		if (this.destY != null) {
-			this.phy.y = this.destY;
+			this.y = this.destY;
 			this.destY = null;
-			this.phy.velY = 0;
+			this.velY = 0;
 		}
 	}
 	

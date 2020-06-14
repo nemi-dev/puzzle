@@ -14,6 +14,9 @@ export default class MouseInput {
 	/** 중요 이벤트(마우스 누름, 마우스 놓음)를 저장한 큐 */
 	private readonly messages : MouseInputMessage[] = [];
 
+	/** 어떤 컨트롤(특히 뷰 기반 컨트롤)에 "배율이 설정"되었고, 리스너에게 모델 좌표계 기반으로 메시지를 보내고 싶을 때 모든 이벤트에 이 값이 곱해진다. */
+	scale : number = 1
+
 	/**
 	 * DOM 이벤트가 발생했을 때 임시적으로 캡쳐한 마우스 위치  
 	 * 이것은 이동, 누름, 놓음 모든 종류의 이벤트를 받아들인다
@@ -64,18 +67,17 @@ export default class MouseInput {
 	private mousedown = (ev : MouseEvent) => {
 		ev.preventDefault();
 		
-		// @todo : acceptCoordinate때문에 listener가 단 하나이어야 한다는 제약이 추가되었다
-		if (this.listener.acceptCoordinate(ev.offsetX, ev.offsetY)) {
+		if (this.listener.acceptCoordinate(ev.offsetX * this.scale, ev.offsetY * this.scale)) {
 
 			// pulse를 맞으면 currentX는 beforeX가 된다.
 			// 따라서 rAF가 발생하는 시점에서 이전 위치는 마우스 누름 위치로 간주된다.
-			this.currentX = ev.offsetX;
-			this.currentY = ev.offsetY;
+			this.currentX = ev.offsetX * this.scale;
+			this.currentY = ev.offsetY * this.scale;
 
 			// 이것과 rAF 사이에 move가 발생하지 않으면 rAF 발생 시 혀재 위치 또한 마우스 누름 위치가 된다.
 			// rAF 발생 전에 move가 먼저 발생하면 input값을 덮어써서 걔들이 current값이 되겠지?
-			this.inputX = ev.offsetX;
-			this.inputY = ev.offsetY;
+			this.inputX = ev.offsetX * this.scale;
+			this.inputY = ev.offsetY * this.scale;
 			
 			this.source.addEventListener('mousemove', this.mousemove);
 			document.addEventListener('mouseup', this.mouseup);
@@ -83,16 +85,16 @@ export default class MouseInput {
 			// 마우스 누름 이벤트를 입력한다.
 			this.messages.push({
 				type : "mousedown",
-				startX : ev.offsetX,
-				startY : ev.offsetY,
+				startX : ev.offsetX * this.scale,
+				startY : ev.offsetY * this.scale,
 				startTime : ev.timeStamp
 			});
 
 			// down-up pair를 위해 마우스 누름 위치를 저장한다.
 			this.messagePool[ev.button] = {
 				type : "mouseup",
-				startX : ev.offsetX,
-				startY : ev.offsetY,
+				startX : ev.offsetX * this.scale,
+				startY : ev.offsetY * this.scale,
 				startTime : ev.timeStamp
 			};
 		}
@@ -101,15 +103,15 @@ export default class MouseInput {
 	}
 
 	private mousemove = (ev : MouseEvent) => {
-		this.inputX = ev.offsetX;
-		this.inputY = ev.offsetY;
+		this.inputX = ev.offsetX * this.scale;
+		this.inputY = ev.offsetY * this.scale;
 	}
 
 	private mouseup = (ev : MouseEvent) => {
 		/* MouseEvent.offsetX는 source 상대 위치이다. 띠용! */
 		
-		let x = ev.offsetX;
-		let y = ev.offsetY;
+		let x = ev.offsetX * this.scale;
+		let y = ev.offsetY * this.scale;
 
 		// 마우스 누름 당시 저장했던 마우스 놓기 메시지를 가져온다.
 		let message = this.messagePool[ev.button];

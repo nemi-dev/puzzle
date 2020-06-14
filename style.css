@@ -40,3 +40,26 @@ ul {
 ul li {
 	margin-bottom: 1em;
 }
+
+h1, h2 {
+	margin: 0.2em 0;
+	font-family: 'Exo 2';
+}
+
+button {
+	appearance: none;
+	background-color: #007BFF;
+	border: none;
+	color: white;
+	font-size: 100%;
+	padding: 0.25em 1em;
+	border-radius: 4px;
+}
+
+button:disabled {
+	opacity: 0.5;
+}
+
+button#stop {
+	background-color: #DC3545;
+}

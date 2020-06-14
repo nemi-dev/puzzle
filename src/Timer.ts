@@ -32,6 +32,39 @@ function formatMs(ms : number) {
  * */
 export default class Timer {
 
+	/** 폰트 픽셀크기 */
+	fontSize : number
+
+	/** y좌표 */
+	y : number
+
+	/** 왼쪽 끝 */
+	left : number
+
+	/** 폭 */
+	private _width : number
+
+	/** 폭의 3분의 1 */
+	private w_3 : number
+
+	/** 폭의 6분의 1 */
+	private w_6 : number
+
+	/** 뷰를 3등분한 기준점에서 십의 자리 숫자를 그릴 오프셋  */
+	private p : number
+
+	/** 뷰를 3등분한 기준점에서 일의 자리 숫자를 그릴 오프셋  */
+	private q : number
+
+	set width (v : number) {
+		this._width = v;
+		this.w_3 = v / 3;
+		this.w_6 = v / 6;
+		this.p = this.w_6 - v / 25;
+		this.q = this.w_6 + v / 25;
+	}
+	
+
 	/** 시작 버튼을 누른 시각 */
 	startTime : DOMHighResTimeStamp = null;
 
@@ -60,30 +93,36 @@ export default class Timer {
 		this.currentTime = t;
 	}
 
-	render (context : CanvasRenderingContext2D, left : number, len : number, y : number) {
-		context.font = '42px "Exo 2"';
+	render (context : CanvasRenderingContext2D) {
+		
+
+		let { y, left, w_3, w_6, p, q } = this;
+		
+		context.font = this.fontSize + 'px "Exo 2"';
 		let [min, sec, cs] = formatMs(this.currentTime - this.startTime);
 		
-		let d = len / 3;
-		let p = len / 8;
-		let q = d * 7 / 8;
-		
-		context.lineWidth = 5;
+		context.lineWidth = 4;
 
-		context.strokeText(min, left + p, y);
-		context.fillText(min, left + p, y);
+		context.strokeText(min, left + w_6, y);
+		context.fillText(min, left + w_6, y);
 
-		context.strokeText('\'', left + q, y);
-		context.fillText('\'', left + q, y);
+		context.strokeText('\'', left + w_3, y);
+		context.fillText('\'', left + w_3, y);
 
-		context.strokeText(sec, left + d + p , y);
-		context.fillText(sec, left + d + p , y);
+		context.strokeText(sec[0], left + w_3 + p , y);
+		context.fillText(sec[0], left + w_3 + p , y);
 
-		context.strokeText('"', left + d + q , y);
-		context.fillText('"', left + d + q , y);
+		context.strokeText(sec[1], left + w_3 + q , y);
+		context.fillText(sec[1], left + w_3 + q , y);
 
-		context.strokeText(cs, left + d * 2 + p, y);
-		context.fillText(cs, left + d * 2 + p, y);
+		context.strokeText('"', left + w_3 * 2 , y);
+		context.fillText('"', left + w_3 * 2 , y);
+
+		context.strokeText(cs[0], left + w_3 * 2 + p, y);
+		context.fillText(cs[0], left + w_3 * 2 + p, y);
+
+		context.strokeText(cs[1], left + w_3 * 2 + q, y);
+		context.fillText(cs[1], left + w_3 * 2 + q, y);
 
 	}
 

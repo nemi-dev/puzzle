@@ -5,16 +5,21 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="/style.css">
-	<title>라스트오리진 퍼즐</title>
+	<title>LAST_ORIGIN Slide Puzzle</title>
 </head>
 <body>
 	<audio src="hit.wav" id="hit-sound"></audio>
 	<div style="text-align: center;">
-		<h1 style="font-family: 'Exo 2';">LAST_ORIGIN Slide Puzzle</h1>
-		<canvas width="360" height="480"></canvas>
+		<h1>Slide Puzzle</h1>
+		<h2>from LAST_ORIGIN</h2>
+		<div class="item" style="text-align: center;">
+			<button id="start">시작하기</button>
+			<button id="stop" disabled>그만두기</button>
+		</div>
+		<canvas id="game-canvas" width="720" height="960" style="width: 360px;"></canvas>
+		<canvas id="preview-canvas" width="480" height="480" style="vertical-align: top; width: 240px;"></canvas>
 	</div>
 	<div class="box">
-		<div class="item" style="text-align: center;"><button id="start">시작하기</button></div>
 		<div class="item"><!--
 		--><div class="half"><label for="size">크기 : </label><input type="number" id="size" value="3" min="3" max="9" step="1"></div><!--
 			--><div class="half"><label for="puzzle-selector">퍼즐셋 : </label><select id="puzzle-selector"></select></div>
@@ -39,20 +44,20 @@
 	</div>
 	<div class="article" style="text-align: left;">
 		<h2 style="text-align: center;">이게 뭐죠?</h2>
-		<p>모바일 <small>유사</small>게임 라스트오리진의 구성 요소 중 하나인 미니게임 슬라이드 퍼즐을 그대로 구현한 것입니다.</p>
-		<p>개발 당시(2020년 05월) 라스트오리진 2.0의 슬라이드 퍼즐은 3x3 크기 고정, 퍼즐 세트 랜덤, 전투 재진입 시 터치가 먹히지 않는 버그, 패치 다운로드 시 스타크 씨 저 속이 안좋아지는 현상 등의 문제점이 있어 꼬와서 만들어봤습니다.</p>
+		<p>모바일 <small>유사</small>게임 라스트오리진의 구성 요소 중 하나인 미니게임 슬라이드 퍼즐을 그대로 구현한 것입니다. 퍼즐을 즐기고 싶다면 그냥 라오에 들어있는 것을 플레이해도 되지만, 기능이 한정적이기 때문에 직접 만들어봤습니다.</p>
 		<p><b>특징</b></p>
 		<ul>
 			<li><b>커스터마이징 가능</b><br>퍼즐 크기와 빈칸의 위치를 바꿀 수 있고, 퍼즐 셋을 직접 선택할 수 있습니다.</li>
 			<li><b>"슬라이드" 퍼즐</b><br>조각을 드래그 또는 스와이프하여 움직일 수 있습니다. 손맛 따위는 옛날에 개나 줘 버린 시점에 원래부터 오토가 없는 퍼즐에서만큼은 손맛을 만끽해 보십시오.<br>기존 방식의 짧은 클릭/터치로도 조각을 움직일 수 있습니다.</li>
 			<li><b>퍼즐 조각 번호 표시</b><br>퍼즐 조각에 번호가 나타나도록 할 수 있습니다. 휴대폰 넘버패드(위에서 아래로 증가), 키패드(아래에서 위로 증가) 방식 중에서 선택 가능합니다.</li>
-			<li><b>광고 없음</b><br>이 사이트에는 광고가 전혀 없습니다. 그리고 과금 요소도 없습니다. <small>그리고 유산깡 좀 그만하십시오.</small></li>
+			<li><b>광고 없음</b><br>이 사이트에는 광고가 전혀 없습니다. 그리고 과금 요소도 없습니다.</li>
 		</ul>
 	</div>
 	<footer style="padding-top: 50px; padding-bottom: 10px; text-align: center;">
 		<a href="https://gall.dcinside.com/lastorigin" target="_blank" rel="noopener noreferrer">
 			<span style="display: inline-block; padding:1em; font-size: 18px; font-weight: bold;"><span style="color: #6674cc;">라스트 오리진</span> <span style="color: #7c7c7c;">마이너 갤러리</span></span>
 		</a>
+		<div style="font-size: 50%;">클릭시 링크로 이동합니다</div>
 	</footer>
 </body>
 <script src="app.js"></script>
