@@ -4,6 +4,7 @@ import { getRowCol, getPosition } from "./utils";
 import MouseInput from "./Input";
 import Grab from "./Grab";
 import Timer from "./Timer";
+import { Renderable, Spark } from "./Renderables";
 
 
 /** 퍼즐에서 아무 퍼즐 조각이나 선택하여, 그 조각의 행렬 위치를 얻는다. */
@@ -30,7 +31,6 @@ function checkSolvable(model : number[], blankTag : number) {
 		}
 	}
 
-	// return inversion % 2 == parity;
 	return (inversion + ((size%2 == 0)? blankRow + 1 : 0)) % 2 == 0;
 }
 
@@ -98,6 +98,8 @@ export default class Game implements MouseInputListener {
 	/** 플레이 타임을 관리하는 컴포넌트 */
 	public readonly timer : Timer;
 
+	private readonly sprites : Renderable[] = []
+
 	readonly viewWidth : number
 	readonly viewHeight : number
 
@@ -125,13 +127,7 @@ export default class Game implements MouseInputListener {
 		this.top = top;
 		this.len = len;
 
-		this.timer = new Timer();
-		this.timer.y = top * 2 + len + timerHeight / 2;
-		this.timer.fontSize = timerHeight * 5 / 12
-		
-		this.timer.left = left;
-		this.timer.width = len;
-
+		this.timer = new Timer(left, len, timerHeight);
 		this.viewWidth = left * 2 + len;
 		this.viewHeight = top * 2 + len + timerHeight;
 		this._size = size;
@@ -194,17 +190,19 @@ export default class Game implements MouseInputListener {
 
 	/** 퍼즐을 섞는다. Game 내에 있는 solvable 속성이 적용된다. */
 	shuffle() {
-		this.puzzleModel.sort(() => 0.5 - Math.random());
-		if (checkSolvable(this.puzzleModel, this.blankTag) != this.solvable) {
-			let a = selectRealPiece(this.puzzleModel, this.blankTag);
-			let b : number;
-			do {
-				b = selectRealPiece(this.puzzleModel, this.blankTag);
-			} while (a == b)
-			let t = this.puzzleModel[a];
-			this.puzzleModel[a] = this.puzzleModel[b];
-			this.puzzleModel[b] = t;
-		}
+		do {
+			this.puzzleModel.sort(() => 0.5 - Math.random());
+			if (checkSolvable(this.puzzleModel, this.blankTag) != this.solvable) {
+				let a = selectRealPiece(this.puzzleModel, this.blankTag);
+				let b : number;
+				do {
+					b = selectRealPiece(this.puzzleModel, this.blankTag);
+				} while (a == b)
+				let t = this.puzzleModel[a];
+				this.puzzleModel[a] = this.puzzleModel[b];
+				this.puzzleModel[b] = t;
+			}
+		} while (this.isSolved());
 	}
 
 	/**
@@ -262,6 +260,11 @@ export default class Game implements MouseInputListener {
 		return ar;
 	}
 
+	/** 불똥을 튄다. */
+	createSpark(x : number, y : number, axis : "h" | "v", direction : number) {
+		this.sprites.push(new Spark(x, y, this.len / this.size, axis, direction));
+	}
+
 
 	/** rAF에 동기화된 마우스 클릭 핸들러 */
 	dispatchMousedown(m : MouseInputMessage) {
@@ -287,8 +290,8 @@ export default class Game implements MouseInputListener {
 		this.timer.update(t);
 	}
 
+	/** 게임 진행 여부에 따라 변경시킬 수 있는 콜백 */
 	private handlePlay : Function = this._noop
-
 
 	/** 게임을 시작한다. */
 	start(startTime : DOMHighResTimeStamp) {
@@ -302,6 +305,14 @@ export default class Game implements MouseInputListener {
 		this.handlePlay = this._noop;
 		this.playing = false;
 		this.timer.end(endTime);
+	}
+
+	/** 의도치 않게 게임을 중단시키기 전에, 게임을 그만들 것인지 확인한다. */
+	checkBeforeEnd() {
+		if (this.playing) {
+			return window.confirm("설정을 변경하면 현재 진행 중인 게임이 종료됩니다.\n게임을 중단하고 설정을 변경할까요?");
+		}
+		return true;
 	}
 
 	/** 퍼즐이 완성되었는지 판단한다. */
@@ -366,7 +377,15 @@ export default class Game implements MouseInputListener {
 		for (const piece of this.pieces) {
 			if (piece.tag != this.blankTag) piece.update(this);
 		}
-		
+
+		for (let i = 0; i < this.sprites.length; i++) {
+			const sprite = this.sprites[i];
+			sprite.update(this);
+			if (sprite.invalid) {
+				this.sprites.splice(i, 1);
+				i--;
+			}
+		}
 	}
 
 	/** 그린다. */
@@ -375,7 +394,9 @@ export default class Game implements MouseInputListener {
 		for (const piece of this.pieces) {
 			if (piece.tag != this.blankTag) piece.render(context, this.showLabel);
 		}
-		this.timer.render(context);
+		for (const sprite of this.sprites) {
+			sprite.render(context);
+		}
 	}
 
 }

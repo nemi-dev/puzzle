@@ -9,15 +9,22 @@
 </head>
 <body>
 	<audio src="hit.wav" id="hit-sound"></audio>
-	<div style="text-align: center;">
-		<h1>Slide Puzzle</h1>
-		<h2>from LAST_ORIGIN</h2>
-		<div class="item" style="text-align: center;">
-			<button id="start">시작하기</button>
-			<button id="stop" disabled>그만두기</button>
+	<div class="area" style="margin: 10px;">
+		<button id="start">시작하기</button>
+		<button id="stop" hidden>그만두기</button>
+		<button id="next" hidden>다음 퍼즐</button>
+		<button id="random" hidden>무작위</button>
+	</div>
+	<div class="area area-fit">
+		<div id="main-canvas-wrapper">
+			<div><canvas id="timer-canvas" width="720" height="120" style="width: 360px;"></canvas></div>
+			<div><canvas id="game-canvas" width="720" height="720" style="width: 360px;"></canvas></div>
 		</div>
-		<canvas id="game-canvas" width="720" height="960" style="width: 360px;"></canvas>
-		<canvas id="preview-canvas" width="480" height="480" style="vertical-align: top; width: 240px;"></canvas>
+		<div id="puzzle-preview">
+			<h3 class="center">미리보기</h3>
+			<canvas id="preview-canvas" width="480" height="480" style="vertical-align: top; width: 240px;"></canvas>
+		</div>
+		<div id="story" hidden></div>
 	</div>
 	<div class="box">
 		<div class="item"><!--
@@ -29,8 +36,6 @@
 			<div>
 			<div class="inline-block"><input type="radio" name="blank-pos" id="blank-pos-top-left"><label for="blank-pos-top-left">↖️</label></div><!--
 			--><div class="inline-block"><input type="radio" name="blank-pos" id="blank-pos-top-right"><label for="blank-pos-top-right">↗️</label></div><!--
-
-
 			--><div class="inline-block"><input type="radio" name="blank-pos" id="blank-pos-bottom-left" checked><label for="blank-pos-bottom-left">↙️</label></div><!--
 			--><div class="inline-block"><input type="radio" name="blank-pos" id="blank-pos-bottom-right"><label for="blank-pos-bottom-right">↘️</label></div><!--
 			--></div>
@@ -53,7 +58,7 @@
 			<li><b>광고 없음</b><br>이 사이트에는 광고가 전혀 없습니다. 그리고 과금 요소도 없습니다.</li>
 		</ul>
 	</div>
-	<footer style="padding-top: 50px; padding-bottom: 10px; text-align: center;">
+	<footer>
 		<a href="https://gall.dcinside.com/lastorigin" target="_blank" rel="noopener noreferrer">
 			<span style="display: inline-block; padding:1em; font-size: 18px; font-weight: bold;"><span style="color: #6674cc;">라스트 오리진</span> <span style="color: #7c7c7c;">마이너 갤러리</span></span>
 		</a>

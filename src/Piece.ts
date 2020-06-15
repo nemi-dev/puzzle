@@ -1,19 +1,6 @@
 import { getRowCol } from "./utils";
 import Game from "./Game";
 
-const AXIS = {
-	h : {
-		axis : 'x',
-		start : 'left',
-		end : 'right'
-	},
-	v : {
-		axis : 'y',
-		start : 'top',
-		end : 'bottom'
-	}
-}
-
 export default class Piece implements Physical {
 
 	/** 퍼즐 조각의 번호 */
@@ -63,15 +50,6 @@ export default class Piece implements Physical {
 		return getRowCol(x, y, boardSize, left, top, divideBy)
 	}
 
-	/**
-	 * 퍼즐 조각을 한 방향으로 움직이기만 한다.
-	 * 위에 것과는 다르게 재귀를 사용하지 않는다.
-	 */
-	move(dist : number, direction : "h" | "v", game : Game, concern : Piece) {
-		const { axis, start, end } = AXIS[direction];
-
-	}
-
 	/** 
 	 * 업데이트한다.  
 	 * 빈칸을 나타내는 조각은 업데이트되지 않는다.
@@ -93,6 +71,9 @@ export default class Piece implements Physical {
 				this.destX = null;
 				if (Math.abs(this.velX) >= 3) {
 					// tick!
+					let x = this.x;
+					if (this.velX > 0) x += this.size;
+					game.createSpark(x, this.y, "h", - Math.sign(this.velX))
 				}
 				this.velX = 0;
 			}
@@ -105,6 +86,9 @@ export default class Piece implements Physical {
 				this.destY = null;
 				if (Math.abs(this.velY) >= 3) {
 					// tick!
+					let y = this.y;
+					if (this.velY > 0) y += this.size;
+					game.createSpark(this.x, y, "v", - Math.sign(this.velX))
 				}
 				this.velY = 0;
 			}

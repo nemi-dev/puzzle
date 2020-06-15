@@ -18,7 +18,6 @@ declare interface Physical {
 	velY? : number
 }
 
-/** (일단은) mouseup, mousedown에 대해서만 고려하도록 한다. */
 declare interface MouseInputMessage {
 	type : "mousedown" | "mouseup"
 

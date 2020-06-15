@@ -13,25 +13,40 @@ import MouseInput from './Input';
 let game : Game;
 let clock : RAFPulseClock;
 let input : MouseInput;
+let puzzleSet : PuzzleSet;
+let puzzleSets : PuzzleSet[];
 
+const previewWrapper = document.getElementById('puzzle-preview');
 
+const gameCanvas = document.getElementById('game-canvas') as HTMLCanvasElement;
+const previewCanvas = document.getElementById('preview-canvas') as HTMLCanvasElement;
+const timerCanvas = document.getElementById('timer-canvas') as HTMLCanvasElement;
 
-const [gameCanvas, previewCanvas] = document.getElementsByTagName('canvas');
 const gameContext = gameCanvas.getContext('2d');
 const previewContext = previewCanvas.getContext('2d');
+const timerContext = timerCanvas.getContext('2d');
+
+const story = document.getElementById('story');
+
 gameContext.textAlign = 'center';
 gameContext.textBaseline = 'middle';
+
+timerContext.textAlign = 'center';
+timerContext.textBaseline = 'middle';
+timerContext.fillStyle = '#FFFFFF';
 
 const horizontalMargin = 20;
 const verticalMargin = 20;
 const boardLength = gameCanvas.width - horizontalMargin * 2;
-const timerHeight = gameCanvas.height / 5;
+const timerHeight = timerCanvas.height;
 
 const sizeInput = document.getElementById('size') as HTMLInputElement;
 const puzzleSelector = document.getElementById('puzzle-selector') as HTMLSelectElement;
 
 const startButton = document.getElementById('start') as HTMLButtonElement;
 const stopButton = document.getElementById('stop') as HTMLButtonElement;
+const nextButton = document.getElementById('next') as HTMLButtonElement;
+const randomButton = document.getElementById('random') as HTMLButtonElement;
 
 const blankPositionSelector = {
 	topLeft : document.getElementById('blank-pos-top-left') as HTMLInputElement,
@@ -74,14 +89,27 @@ async function loadPuzzleSets () {
 	return puzzleSets;
 }
 
-function resetButtons() {
+function setButtonsAsInitial() {
+	startButton.hidden = false;
 	startButton.innerText = '시작하기';
-	stopButton.disabled = true;
+	stopButton.hidden = true;
+	nextButton.hidden = true;
+	randomButton.hidden = true;
 }
 
-function setSizeHandler() {
-	game.setSize(sizeInput.valueAsNumber, ...decodeBlank());
-	resetButtons();
+function setButtonsAsStart() {
+	startButton.hidden = true;
+	stopButton.hidden = false;
+	nextButton.hidden = true;
+	randomButton.hidden = true;
+}
+
+function setButtonsAsComplete() {
+	startButton.hidden = false;
+	startButton.innerText = '다시하기';
+	stopButton.hidden = true;
+	nextButton.hidden = false;
+	randomButton.hidden = false;
 }
 
 
@@ -89,43 +117,119 @@ function renderPreview({ texture, left, top, size } : PuzzleSet) {
 	let { width, height } = previewCanvas;
 	previewContext.clearRect(0, 0, width, height);
 	previewContext.drawImage(
-		texture,
-		left,
-		top,
-		size,
-		size,
+		texture, left, top, size, size,
 		horizontalMargin, verticalMargin, width - horizontalMargin * 2, height - verticalMargin * 2
 	)
 }
 
-loadPuzzleSets().then((puzzleSets) => {
 
-	
+function popStory() {
+	previewWrapper.hidden = true;
+	story.hidden = false;
+	if (puzzleSet) story.innerText = puzzleSet.story;
+}
+
+function resetStory() {
+	previewWrapper.hidden = false;
+	story.hidden = true;
+}
+
+function setPuzzleSize(ev : Event) {
+	if (game.checkBeforeEnd()) {
+		game.setSize(sizeInput.valueAsNumber, ...decodeBlank());
+		setButtonsAsInitial();
+		resetStory();
+	} else {
+		ev.preventDefault();
+		return false;
+	}
+}
+
+function _start(t : DOMHighResTimeStamp) {
+	game.end(null);
+	game.shuffle();
+	game.initPiecePosition();
+	game.start(t);
+	setButtonsAsStart();
+	resetStory();
+}
+
+function _nextPuzzle(ev : Event) {
+	let currentIndex = Number(puzzleSelector.value);
+	do {
+		currentIndex = (currentIndex + 1) % puzzleSelector.length;
+		puzzleSet = puzzleSets[currentIndex];
+	} while (!puzzleSet.solvable);
+	puzzleSelector.value = currentIndex.toString();
+}
+
+function _randomPuzzle(ev : Event) {
+	let beforeIndex = Number(puzzleSelector.value);
+	let currentIndex : number;
+	do {
+		currentIndex = Math.floor(Math.random() * puzzleSelector.length);
+		puzzleSet = puzzleSets[currentIndex];
+	} while (!puzzleSet.solvable || (beforeIndex == currentIndex));
+	puzzleSelector.value = currentIndex.toString();
+}
+
+loadPuzzleSets().then((sets) => {
+	puzzleSets = sets;
 	startButton.addEventListener('click', ev => {
-		game.shuffle();
-		game.initPiecePosition();
-		game.start(ev.timeStamp);
-		startButton.innerText = '다시하기';
-		stopButton.disabled = false;
+		if (game.checkBeforeEnd()) {
+			_start(ev.timeStamp);
+		} else {
+			ev.preventDefault();
+			return false;
+		}
 	});
 
 	stopButton.addEventListener('click', ev => {
 		game.end(ev.timeStamp);
-		resetButtons();
+		setButtonsAsInitial();
 	});
 
+	nextButton.addEventListener('click', ev => {
+		if (game.checkBeforeEnd()) {
+			_nextPuzzle(ev);
+			game.setPuzzleSet(puzzleSets[puzzleSelector.value]);
+			renderPreview(puzzleSets[puzzleSelector.value]);
+			_start(ev.timeStamp);
+		} else {
+			ev.preventDefault();
+			return false;
+		}
+	});
 
-	blankPositionSelector.topLeft.addEventListener('input', setSizeHandler);
-	blankPositionSelector.topRight.addEventListener('input', setSizeHandler);
-	blankPositionSelector.bottomLeft.addEventListener('input', setSizeHandler);
-	blankPositionSelector.bottomRight.addEventListener('input', setSizeHandler);
+	randomButton.addEventListener('click', ev => {
+		if (game.checkBeforeEnd()) {
+			_randomPuzzle(ev);
+			game.setPuzzleSet(puzzleSets[puzzleSelector.value]);
+			renderPreview(puzzleSets[puzzleSelector.value]);
+			_start(ev.timeStamp);
+		} else {
+			ev.preventDefault();
+			return false;
+		}
+	});
 
-	sizeInput.addEventListener('change', setSizeHandler);
+	blankPositionSelector.topLeft.addEventListener('input', setPuzzleSize);
+	blankPositionSelector.topRight.addEventListener('input', setPuzzleSize);
+	blankPositionSelector.bottomLeft.addEventListener('input', setPuzzleSize);
+	blankPositionSelector.bottomRight.addEventListener('input', setPuzzleSize);
+
+	sizeInput.addEventListener('change', setPuzzleSize);
 
 	puzzleSelector.addEventListener('change', ev => {
-		game.setPuzzleSet(puzzleSets[puzzleSelector.value]);
-		renderPreview(puzzleSets[puzzleSelector.value]);
-		resetButtons();
+		if (game.checkBeforeEnd()) {
+			game.setPuzzleSet(puzzleSets[puzzleSelector.value]);
+			renderPreview(puzzleSets[puzzleSelector.value]);
+			setButtonsAsInitial();
+			resetStory();
+		} else {
+			ev.preventDefault();
+			return false;
+		}
 	});
 
 	labelSelector.none.addEventListener('input', ev => {
@@ -142,12 +246,12 @@ loadPuzzleSets().then((puzzleSets) => {
 		game.assignLabel(true);
 	});
 
-	let puzzleSet : PuzzleSet = puzzleSets[puzzleSelector.value];
+	puzzleSet = sets[puzzleSelector.value];
 	let size = sizeInput.valueAsNumber;
 	let scale = gameCanvas.width / gameCanvas.getBoundingClientRect().width;
 
 	game = new Game(size, puzzleSet, horizontalMargin, verticalMargin, boardLength, timerHeight);
-	game.completeHandlers.push(resetButtons);
+	game.completeHandlers.push(setButtonsAsComplete, popStory);
 	renderPreview(puzzleSet);
 
 	input = new MouseInput();
@@ -158,6 +262,7 @@ loadPuzzleSets().then((puzzleSets) => {
 		input.update();
 		game.update(t, input);
 		game.render(gameContext);
+		game.timer.render(timerContext);
 	});
 	
 	clock.run();

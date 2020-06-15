@@ -41,8 +41,11 @@ export default class Timer {
 	/** 왼쪽 끝 */
 	left : number
 
-	/** 폭 */
+	/** (margin을 제외한) 폭 */
 	private _width : number
+
+	/** 높이 */
+	private _height : number
 
 	/** 폭의 3분의 1 */
 	private w_3 : number
@@ -62,6 +65,18 @@ export default class Timer {
 		this.w_6 = v / 6;
 		this.p = this.w_6 - v / 25;
 		this.q = this.w_6 + v / 25;
+	}
+
+	set height (v : number) {
+		this._height = v;
+		this.fontSize = v - 18;
+	}
+
+	constructor(left : number, width : number, height : number) {
+		this.y = height / 2;
+		this.left = left;
+		this.width = width;
+		this.height = height;
 	}
 	
 
@@ -95,35 +110,35 @@ export default class Timer {
 
 	render (context : CanvasRenderingContext2D) {
 		
-
 		let { y, left, w_3, w_6, p, q } = this;
 		
+		context.clearRect(left, 0, this._width, this._height);
 		context.font = this.fontSize + 'px "Exo 2"';
+		
 		let [min, sec, cs] = formatMs(this.currentTime - this.startTime);
 		
 		context.lineWidth = 4;
 
+		context.textAlign = 'center';
 		context.strokeText(min, left + w_6, y);
-		context.fillText(min, left + w_6, y);
-
 		context.strokeText('\'', left + w_3, y);
-		context.fillText('\'', left + w_3, y);
-
-		context.strokeText(sec[0], left + w_3 + p , y);
-		context.fillText(sec[0], left + w_3 + p , y);
-
-		context.strokeText(sec[1], left + w_3 + q , y);
-		context.fillText(sec[1], left + w_3 + q , y);
-
 		context.strokeText('"', left + w_3 * 2 , y);
+		context.fillText(min, left + w_6, y);
+		context.fillText('\'', left + w_3, y);
 		context.fillText('"', left + w_3 * 2 , y);
 
-		context.strokeText(cs[0], left + w_3 * 2 + p, y);
-		context.fillText(cs[0], left + w_3 * 2 + p, y);
+		context.textAlign = 'right';
+		context.strokeText(sec[0], left + w_3 + w_6 , y);
+		context.strokeText(cs[0], left + w_3 * 2 + w_6, y);
+		context.fillText(sec[0], left + w_3 + w_6, y);
+		context.fillText(cs[0], left + w_3 * 2 + w_6, y);
 
-		context.strokeText(cs[1], left + w_3 * 2 + q, y);
-		context.fillText(cs[1], left + w_3 * 2 + q, y);
-
+		context.textAlign = 'left';
+		context.strokeText(sec[1], left + w_3 + w_6, y);
+		context.strokeText(cs[1], left + w_3 * 2 + w_6, y);
+		context.fillText(sec[1], left + w_3 + w_6, y);
+		context.fillText(cs[1], left + w_3 * 2 + w_6, y);
+		
 	}
 
 }

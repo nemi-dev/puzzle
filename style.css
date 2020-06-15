@@ -3,16 +3,34 @@ body {
 	color: white;
 	background-color: rgb(41, 43, 44);
 }
+
 body, button, select {
 	font-family: "Noto Sans KR";
 }
+
 input {
 	font-family: 'Exo 2';
 	text-align: center;
 }
+
+.center {
+	text-align: center;
+}
+
 .inline-block {
 	display: inline-block;
 }
+
+.area {
+	display: flex;
+	align-items: end;
+	justify-content: center;
+}
+
+#story {
+	max-width: 33vw;
+}
+
 div.box {
 	width: calc(30% + 200px);
 	min-width: 360px;
@@ -22,28 +40,33 @@ div.box {
 	border: 1px solid #b4b4b4;
 	border-radius: 30px;
 }
+
 div.item {
 	margin: 1em 0;
 }
+
 div.article {
 	width : calc(1280px - 20vw);
 	max-width: calc(100vw - 2em);
 	margin: auto;
 }
+
 div.half {
 	display: inline-block;
 	width: 50%;
 }
+
 ul {
 	padding-inline-start: 20px;
 }
+
 ul li {
 	margin-bottom: 1em;
 }
 
-h1, h2 {
+h1, h2, h3 {
 	margin: 0.2em 0;
-	font-family: 'Exo 2';
+	font-family: 'Exo 2', 'Noto Sans KR';
 }
 
 button {
@@ -52,7 +75,7 @@ button {
 	border: none;
 	color: white;
 	font-size: 100%;
-	padding: 0.25em 1em;
+	padding: 0.5em 1em;
 	border-radius: 4px;
 }
 
@@ -62,4 +85,28 @@ button:disabled {
 
 button#stop {
 	background-color: #DC3545;
+}
+
+button#next {
+	background-color: #28A745;
+}
+
+button#random {
+	background-color: #17A2B8;
+}
+
+footer {
+	padding-top: 45px;
+	padding-bottom: 25px;
+	text-align: center;
+}
+
+@media (max-width : 767px) {
+	.area-fit {
+		flex-direction: column;
+		align-items: center;
+	}
+	#story {
+		max-width: 90vw;
+	}
 }
