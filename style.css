@@ -28,7 +28,7 @@ input {
 }
 
 #story {
-	max-width: 33vw;
+	width: 240px;
 }
 
 div.box {
@@ -105,8 +105,5 @@ footer {
 	.area-fit {
 		flex-direction: column;
 		align-items: center;
-	}
-	#story {
-		max-width: 90vw;
 	}
 }

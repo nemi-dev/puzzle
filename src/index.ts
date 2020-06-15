@@ -94,7 +94,7 @@ function setButtonsAsInitial() {
 	startButton.innerText = '시작하기';
 	stopButton.hidden = true;
 	nextButton.hidden = true;
-	randomButton.hidden = true;
+	randomButton.hidden = false;
 }
 
 function setButtonsAsStart() {
@@ -192,8 +192,8 @@ loadPuzzleSets().then((sets) => {
 	nextButton.addEventListener('click', ev => {
 		if (game.checkBeforeEnd()) {
 			_nextPuzzle(ev);
-			game.setPuzzleSet(puzzleSets[puzzleSelector.value]);
-			renderPreview(puzzleSets[puzzleSelector.value]);
+			game.setPuzzleSet(puzzleSet);
+			renderPreview(puzzleSet);
 			_start(ev.timeStamp);
 		} else {
 			ev.preventDefault();
@@ -204,8 +204,8 @@ loadPuzzleSets().then((sets) => {
 	randomButton.addEventListener('click', ev => {
 		if (game.checkBeforeEnd()) {
 			_randomPuzzle(ev);
-			game.setPuzzleSet(puzzleSets[puzzleSelector.value]);
-			renderPreview(puzzleSets[puzzleSelector.value]);
+			game.setPuzzleSet(puzzleSet);
+			renderPreview(puzzleSet);
 			_start(ev.timeStamp);
 		} else {
 			ev.preventDefault();
@@ -222,8 +222,9 @@ loadPuzzleSets().then((sets) => {
 
 	puzzleSelector.addEventListener('change', ev => {
 		if (game.checkBeforeEnd()) {
-			game.setPuzzleSet(puzzleSets[puzzleSelector.value]);
-			renderPreview(puzzleSets[puzzleSelector.value]);
+			puzzleSet = puzzleSets[puzzleSelector.value];
+			game.setPuzzleSet(puzzleSet);
+			renderPreview(puzzleSet);
 			setButtonsAsInitial();
 			resetStory();
 		} else {
