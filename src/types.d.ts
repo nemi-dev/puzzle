@@ -18,8 +18,10 @@ declare interface Physical {
 	velY? : number
 }
 
-declare interface MouseInputMessage {
-	type : "mousedown" | "mouseup"
+declare interface CoordMessage {
+	type : "mousedown" | "mouseup" | "touchstart" | "touchend"
+
+	id : number
 
 	startX? : number
 	startY? : number
@@ -33,7 +35,13 @@ declare interface MouseInputMessage {
 
 declare interface MouseInputListener {
 	acceptCoordinate(x : number, y : number) : boolean
-	dispatchMousedown(m : MouseInputMessage) : void
-	dispatchMouseup(m : MouseInputMessage) : void	
+	dispatchMousedown(m : CoordMessage) : void
+	dispatchMouseup(m : CoordMessage) : void	
+}
+
+declare interface TouchInputListener {
+	acceptCoordinate(x : number, y : number) : boolean
+	dispatchTouchstart(m : CoordMessage) : void
+	dispatchTouchend(m : CoordMessage) : void	
 }
 

@@ -1,4 +1,10 @@
-function quantize(pos : number, parentSize : number, offset : number, divideBy : number) {
+const thresold = 0.01
+
+export function floatEqual(a : number, b : number) {
+	return Math.abs(a - b) < thresold;
+}
+
+export function quantize(pos : number, parentSize : number, offset : number, divideBy : number) {
 	let n = Math.floor((pos - offset) / (parentSize / divideBy));
 	return n;
 }

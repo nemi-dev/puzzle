@@ -1,7 +1,7 @@
 import Piece from "./Piece";
 import Game from "./Game";
 import { getPosition } from "./utils";
-import MouseInput from "./Input";
+import { CoordState } from "./Input";
 import { willHit, clone, assign } from "./Physical";
 
 const maximumTapDistance = 31
@@ -26,7 +26,7 @@ export default class Grab {
 	 * 현재 누른 퍼즐 조각과 같은 행 또는 열에 있는 조각들의 모음이다.
 	 * 충돌 테스트는 여기 있는 조각들에 한해서 실행된다.
 	 */
-	concern: Piece[] = null;
+	concern: Piece[] = [];
 
 	/**
 	 * 현재 누른 퍼즐 조각을 어느 방향으로 움직일 수 있는지 나타낸다.
@@ -36,7 +36,7 @@ export default class Grab {
 	moveAxis: "v" | "h" | null = null;
 
 	/** (rAF-sync) 마우스를 누를 때 실행된다. */
-	onMousedown(m: MouseInputMessage, game: Game) {
+	onMousedown(m: CoordMessage, game: Game) {
 		// 여기서는 [blankRow, blankCol] != [row, col]이다. 만약 둘이 같다면 이것은 실행조차 되지 않는다.
 		let { startX: x, startY: y } = m;
 		let [blankRow, blankCol] = game.rowColOfBlank;
@@ -57,7 +57,7 @@ export default class Grab {
 	}
 
 	/** (rAF-sync) 마우스를 놓을 때 실행된다. */
-	onMouseup(m: MouseInputMessage, game: Game) {
+	onMouseup(m: CoordMessage, game: Game) {
 		let { startX, startY, endX, endY, startTime, endTime } = m;
 		let distance = this.moveAxis == 'h'? endX - startX : endY - startY;
 		/**
@@ -86,7 +86,6 @@ export default class Grab {
 		// 이제 마우스 놓기 처리가 완전히 끝났을 것이므로 데이터를 정리한다.
 		this.piece = null;
 		this.moveAxis = null;
-		this.concern = null;
 	}
 
 	/**
@@ -139,38 +138,99 @@ export default class Grab {
 			}
 	}
 
-	/**
-	 * 영향을 받은 퍼즐 조각들의 현재 위치(Piece.prototype.x, Piece.prototype.y)만을 가지고
-	 * 모델을 업데이트한다. 이 놈은 마우스를 놓을 때에만 실행되며 마우스 놓기 핸들러와 동등한 것으로 본다.
-	 * @deprecated 속도는 전혀 고려되지 않는다.
-	 */
-	updateModelByView(game : Game) {
+	/** 관심 퍼즐 조각들의 위치와 현재 잡고 있는 퍼즐 조각의 속도를 고려하여 조각들의 위치를 찾는다. */
+	private competitionPosition({left, top, len, size, blankTag} : Game) {
+		let modelChanges : ModelChange = {};
+		let changeVector : Piece[] = Array(size);
+		const [pos, vel] = this.moveAxis == "h"? ["x", "velX"] : ["y", "velY"];
+
+		for (const piece of this.concern) {
+			// 빈 조각과 잡은 조각은 나중에 판단한다.
+			if ((piece.tag == blankTag) || (piece == this.piece)) continue;
+			const [row, col] = piece.whereami(left, top, len, size);
+			let changeIndex = this.moveAxis == "h"? col : row;
+			changeVector[changeIndex] = piece;
+		}
+		
+		// 이제 잡은 조각의 위치를 판단한다.
+		const [gRow, gCol] = this.piece.evaluatePosition(left, top, len, size);
+		const grabNewIndex = this.moveAxis == "h"? gCol : gRow;
+		const velSign = Math.sign(this.piece[vel]);
+		if (changeVector[grabNewIndex]) {
+			// 잡은 조각님께서 들어갈 위치에 다른 놈이 꿰차고 있다면
+			let a = grabNewIndex;
+
+			// 이동 방향으로 빈칸이 있는지 찾는다.
+			while (changeVector[a] && (a >= 0) && (a < size)) {
+				a += velSign;
+			}
+			if (a >= 0 && a < size) {
+				// 빈칸을 찾았다면 시프트한다.
+				for (let i = a; i != grabNewIndex; i -= velSign) {
+					changeVector[i] = changeVector[i - velSign];
+				}
+				changeVector[grabNewIndex] = this.piece;
+			} else {
+				changeVector[grabNewIndex - velSign] = this.piece;
+			}
+		} else {
+			// 잡은 조각님께서 그냥 들어갈 수 있는 환경이라면
+			changeVector[grabNewIndex] = this.piece;
+		}
+
+		const start = this.moveAxis == 'h' ? this.row * size : this.col;
+		const increment = this.moveAxis == 'h' ? 1 : size;
+		for (let i = 0; i < size; i++) {
+			let flattenizedIndex = start + increment * i;
+			if (changeVector[i]) {
+				const piece = changeVector[i];
+				let row = Math.floor(flattenizedIndex / size);
+				let col = flattenizedIndex % size;
+				modelChanges[flattenizedIndex] = piece.tag;
+				piece.destX = left + col * piece.size;
+				piece.destY = top + row * piece.size;
+			} else {
+				modelChanges[flattenizedIndex] = blankTag;
+			}
+		}
+
+		return modelChanges;
+	}
+
+	/** 오로지 현재 위치만으로 관심 퍼즐 조각들의 새 위치를 결정한다. */
+	private staticPosition({left, top, len, size, blankTag} : Game) {
 		let modelChanges : ModelChange = {};
 		for (const piece of this.concern) {
-			if (piece.tag == game.blankTag)
-				continue;
-			// 영향을 받은 모든 퍼즐 조각들의 모델 행렬 위치를 얻는다. 
-			let [row, col] = piece.whereami(game.left, game.top, game.len, game.size);
-			// 변경점에 퍼즐 조각의 새로운 위치를 설정한다.
-			modelChanges[row * game.size + col] = piece.tag;
+			if (piece.tag == blankTag) continue;
+			// 영향을 받은 모든 퍼즐 조각들의 모델 행렬 위치를 얻는다.
+			let [row, col] = piece.whereami(left, top, len, size);
 
+			// 변경점에 퍼즐 조각의 새로운 위치를 설정한다.
+			modelChanges[row * size + col] = piece.tag;
+			
 			// 조각이 새로운 위치로 이동하도록 destX, destY를 설정한다.
-			let destX = game.left + col * game.pieceSize;
-			let destY = game.top + row * game.pieceSize;
-			piece.destX = destX;
-			piece.destY = destY;
+			piece.destX = left + col * piece.size;
+			piece.destY = top + row * piece.size;
 		}
-		// 옮기기 이후 모델의 변경점(changes)을 찾는다.
-		const start = this.moveAxis == 'h' ? this.row * game.size : this.col;
-		const increment = this.moveAxis == 'h' ? 1 : game.size;
-		// 빈칸을 찾는다.
-		for (let i = 0; i < game.size; i++) {
+		const start = this.moveAxis == 'h' ? this.row * size : this.col;
+		const increment = this.moveAxis == 'h' ? 1 : size;
+		for (let i = 0; i < size; i++) {
 			let index = start + increment * i;
 			if (!(index in modelChanges)) {
-				modelChanges[index] = game.blankTag;
+				modelChanges[index] = blankTag;
 				break;
 			}
 		}
+		return modelChanges;
+	}
+
+	/**
+	 * 퍼즐 조각을 물리적으로 움직인 후 마우스를 놓을 때 실행된다.  
+	 */
+	updateModelByView(game : Game) {
+		// let modelChanges = this.staticPosition(game);
+		let modelChanges = this.competitionPosition(game);
+
 		// 변경점을 퍼즐 모델에 적용시킨다.
 		for (const index in modelChanges) {
 			const tag = modelChanges[index];
@@ -179,26 +239,24 @@ export default class Grab {
 	}
 
 	/** 마우스를 누르고 있는 때에 한해 업데이트(rAF)가 발생할 때 호출된다. 즉, 실질적 업데이트와 같다. */
-	update(game: Game, holdInput : MouseInput) {
-		if (this.moveAxis == "h" && holdInput.beforeX != null) {
-			let x = holdInput.x - this.pieceOffsetX;
+	update(game: Game, coord : CoordState) {
+		if (this.moveAxis == "h" && coord.beforeX != null) {
+			let x = coord.x - this.pieceOffsetX;
 			this.piece.velX = x - this.piece.x;
-		} else if (this.moveAxis == "v" && holdInput.beforeY != null) {
-			let y = holdInput.y - this.pieceOffsetY;
+		} else if (this.moveAxis == "v" && coord.beforeY != null) {
+			let y = coord.y - this.pieceOffsetY;
 			this.piece.velY = y - this.piece.y;
 		}
 		this.resolveCollision(game);
 	}
 
 	/**
-	 * 현재 concern과 **grabbing에 대하여** 충돌 해결을 한 번 한다.
+	 * 충돌 해결을 실행한다.
 	 * 이것은 오로지
 	 * # 잡고 있는 퍼즐만이 실제 속도를 가질 수 있다
 	 * 는 것을 가정으로 실행된다.
 	 * 
-	 * 이것은 단 한 번의 호출로 충돌을 해결할 수 있다.
-	 * 
-	 * 위치관계를 이해하기 위해 현재상태를 보존할 필요성마저 없을 정도.
+	 * 이것은 충돌 전파(propagation) 방식으로 단 한 번의 실행으로, 이중 버퍼 없이 충돌 해결이 가능하다.
 	 */
 	private resolveCollision(game : Game) {
 		const blankTag = game.blankTag
@@ -243,16 +301,16 @@ export default class Grab {
 				const piece = this.concern[i];
 				/* 
 				다음의 식은 각각의 경우에 따라 이렇게 해석된다.
-				- 왼쪽 진행인 경우 : concern[i][pos] = .x; gVsign = -1; backpressureLimit = left (+ N);
+				- 왼쪽 진행인 경우 : [pos] = .x; gVsign = -1; backpressureLimit = left (+ N);
 					=> -.x + left > 0
 					=> .x < left
-				- 오른쪽 진행인 경우 : concern[i][pos] = .x; gVsign = 1; backpressureLimit = right - size (+ N);
+				- 오른쪽 진행인 경우 : [pos] = .x; gVsign = 1; backpressureLimit = right - size (+ N);
 					=> x - right + size > 0
 					=> x > right - size
-				- 위로 진행인 경우 : concern[i][pos] = .y; gVsign = -1; backpressureLimit = top (+ N);
+				- 위로 진행인 경우 : [pos] = .y; gVsign = -1; backpressureLimit = top (+ N);
 					=> -.y + top > 0
 					=> .y < top
-				- 아래로 진행인 경우 : concern[i][pos] = .y; gVsign = 1; backpressureLimit = bottom - size (+ N);
+				- 아래로 진행인 경우 : [pos] = .y; gVsign = 1; backpressureLimit = bottom - size (+ N);
 					=> .y - bottom + size > 0
 					=> .y > bottom - size
 				*/

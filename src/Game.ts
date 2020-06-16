@@ -1,7 +1,7 @@
 import Piece from "./Piece";
 import PuzzleSet from "./PuzzleSet";
 import { getRowCol, getPosition } from "./utils";
-import MouseInput from "./Input";
+import { CoordState } from "./Input";
 import Grab from "./Grab";
 import Timer from "./Timer";
 import { Renderable, Spark } from "./Renderables";
@@ -34,7 +34,7 @@ function checkSolvable(model : number[], blankTag : number) {
 	return (inversion + ((size%2 == 0)? blankRow + 1 : 0)) % 2 == 0;
 }
 
-export default class Game implements MouseInputListener {
+export default class Game implements MouseInputListener, TouchInputListener {
 	
 	/**
 	 * 게임 진행 중 여부
@@ -222,9 +222,12 @@ export default class Game implements MouseInputListener {
 			let col = (i % num);
 
 			let piece = this.pieces[tag];
-			piece.destX = this.left + col * len / num;
-			piece.destY = this.top + row * len / num;
-			piece.getIntoPositionNow();
+			piece.x = this.left + col * len / num;
+			piece.y = this.top + row * len / num;
+			piece.destX = null;
+			piece.destY = null;
+			piece.velX = 0;
+			piece.velY = 0;
 		}
 	}
 
@@ -266,18 +269,48 @@ export default class Game implements MouseInputListener {
 	}
 
 
+	/**
+	 * 주어진 좌표를 클릭했을 때 마우스 드래그/놓기 이벤트를 활성화시킬 것인지 여부  
+	 * accept되지 않으면 **입력 자체가 완전히 무시되어 버린다.**
+	 */
+	acceptCoordinate(x : number, y : number) {
+		// 퍼즐 밖 영역을 클릭하면 드래그로 이어지지 않는다.
+		if (x < this.left || x > this.right || y < this.top || y > this.bottom) return false;
+		
+		// 움직일 수 없는 조각을 클릭하면 드래그로 이어지지 않는다.
+		let [blankRow, blankCol] = this.rowColOfBlank;
+		let [row, col] = this.getRowColAt(x, y);
+
+		if ((blankRow == row) == (blankCol == col)) return false;
+
+		return true;
+	}
+
 	/** rAF에 동기화된 마우스 클릭 핸들러 */
-	dispatchMousedown(m : MouseInputMessage) {
+	dispatchMousedown(m : CoordMessage) {
 		this.grab.onMousedown(m, this);
 
 		// 아직 제 자리를 못 찾고 헤매는 조각이 있으면 곧바로 destX,destY 값을 적용시켜 즉시 이동한다.
 		for (const piece of this.pieces) {
-			if (piece.tag != this.blankTag) piece.getIntoPositionNow();
+			if (piece.tag != this.blankTag) piece.getIntoPositionNow(this);
+		}
+	}
+
+	dispatchTouchstart(m : CoordMessage) {
+		this.grab.onMousedown(m, this);
+
+		// 아직 제 자리를 못 찾고 헤매는 조각이 있으면 곧바로 destX,destY 값을 적용시켜 즉시 이동한다.
+		for (const piece of this.pieces) {
+			if (piece.tag != this.blankTag) piece.getIntoPositionNow(this);
 		}
 	}
 
 	/** rAF에 동기화된 마우스 놓기 핸들러 */
-	dispatchMouseup(m : MouseInputMessage) {
+	dispatchMouseup(m : CoordMessage) {
+		this.grab.onMouseup(m, this);
+	}
+
+	dispatchTouchend(m : CoordMessage) {
 		this.grab.onMouseup(m, this);
 	}
 
@@ -337,22 +370,6 @@ export default class Game implements MouseInputListener {
 		}
 	}
 	
-	/**
-	 * 주어진 좌표를 클릭했을 때 마우스 드래그/놓기 이벤트를 활성화시킬 것인지 여부  
-	 * accept되지 않으면 **입력 자체가 완전히 무시되어 버린다.**
-	 */
-	acceptCoordinate(x : number, y : number) {
-		// 퍼즐 밖 영역을 클릭하면 드래그로 이어지지 않는다.
-		if (x < this.left || x > this.right || y < this.top || y > this.bottom) return false;
-		
-		// 움직일 수 없는 조각을 클릭하면 드래그로 이어지지 않는다.
-		let [blankRow, blankCol] = this.rowColOfBlank;
-		let [row, col] = this.getRowColAt(x, y);
-
-		if ((blankRow == row) == (blankCol == col)) return false;
-
-		return true;
-	}
 
 
 	/**
@@ -367,14 +384,14 @@ export default class Game implements MouseInputListener {
 	 * - input.pulse()
 	 *  - 현재 값이 이전 값으로(.beforeX, .beforeY) 전이된다.
 	 * */
-	update(t : DOMHighResTimeStamp, input : MouseInput) {
+	update(t : DOMHighResTimeStamp, coord : CoordState) {
 		this.handlePlay(t);
 
 		if (this.grab.piece) {
-			this.grab.update(this, input);
+			this.grab.update(this, coord);
 		}
-
-		for (const piece of this.pieces) {
+		
+		for (const piece of this.grab.concern) {
 			if (piece.tag != this.blankTag) piece.update(this);
 		}
 

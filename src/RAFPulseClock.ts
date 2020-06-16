@@ -1,6 +1,6 @@
 export default class RAFPulseClock {
 
-	readonly update: FrameRequestCallback;
+	update: FrameRequestCallback;
 
 	private running: boolean = false;
 

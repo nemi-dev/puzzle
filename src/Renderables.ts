@@ -6,39 +6,20 @@ export interface Renderable {
 	readonly invalid : boolean
 }
 
-
 const uniformLife = 20;
 const uniformParticleSpeed = 20;
 
 const gravity = 0.75;
 const airResist = 0.125;
 
-
 const sparkHueStart = 50;
-const sparkHueEnd = 25;
+const sparkHueEnd = 15;
 
 const sparkLumStart = 50;
 const sparkLumEnd = 25;
 
 const sparkAlphaStart = 1.0;
-const sparkAlphaEnd = 0.5;
-
-const fireballHueStart = 30;
-const fireballHueEnd = -20;
-
-const fireballLumStart = 90;
-const fireballLumEnd = 0;
-
-const fireballAlphaStart = 1.0;
-const fireballAlphaEnd = -3.0;
-
-function getFireballStyle(life : number) {
-	let p = 1 - life / uniformLife;
-	let h = fireballHueStart + (fireballHueEnd - fireballHueStart) * p;
-	let v = fireballLumStart + (fireballLumEnd - fireballLumStart) * p;
-	let a = fireballAlphaStart + (fireballAlphaEnd - fireballAlphaStart) * p;
-	return `hsl(${h}, 100%, ${v}%, ${a})`;
-}
+const sparkAlphaEnd = 0;
 
 function getSprakStyle(life : number) {
 	let p = 1 - life / uniformLife;
@@ -84,34 +65,24 @@ export class Spark implements Renderable {
 	 * */
 	private direction : number
 
-	/** 파이어볼의 폭 */
-	private width : number
-
-	/**
-	 * @param x 왼쪽 끝
-	 * @param y 위쪽 끝
-	 * @param len 길이
-	 * @param axis 충돌이 발생한 축
-	 * @param direction 스파크가 튀는 방향
-	 */
 	constructor(x : number, y : number, len : number, axis : "h" | "v", direction : number) {
 		this.x = x;
 		this.y = y;
 		this.len = len;
-		this.width = 8;
 		this.axis = axis;
 		this.direction = direction;
+		const particleCount = Math.floor(len / 10);
 		let [eVelX, eVelY] = axis == "h"? [direction * uniformParticleSpeed, 0] : [0, direction * uniformParticleSpeed];
-		this.particles = Array.from(Array(10), () => {
+		this.particles = Array.from(Array(particleCount), () => {
 			let relPos = Math.random() * len;
-			let [_x, _y] = axis == "h"? [x, y + relPos] : [x + relPos, y];
+			let [_x, _y] = axis == "h"? [x + direction * uniformParticleSpeed, y + relPos] : [x + relPos, y + direction * uniformParticleSpeed];
 			let velX : number;
 			let velY : number;
 			if (axis == "h") {
 				velX = eVelX + (Math.random() - 0.5) * uniformParticleSpeed * 1.5;
-				velY = eVelY + (relPos - len / 2) / 6;
+				velY = eVelY + (relPos - len / 2) / 5;
 			} else {
-				velX = eVelX + (relPos - len / 2) / 6;
+				velX = eVelX + (relPos - len / 2) / 5;
 				velY = eVelY + (Math.random() - 0.5) * uniformParticleSpeed * 1.5;
 			}
 			return { x : _x, y : _y, velX, velY };
@@ -129,11 +100,14 @@ export class Spark implements Renderable {
 		this.life--;
 	}
 
-	render(context: CanvasRenderingContext2D): void {
+	/** 불똥을 그린다. */
+	private renderParticles(context : CanvasRenderingContext2D) {
 		const tempStroke = context.strokeStyle;
+		const tmpLineCap = context.lineCap;
+
 		context.strokeStyle = getSprakStyle(this.life);
-		context.lineWidth = 3;
-		context.globalCompositeOperation = "screen";
+		context.lineWidth = 5;
+		context.lineCap = 'round';
 
 		for (const particle of this.particles) {
 			const { x, y, velX, velY } = particle;
@@ -142,19 +116,46 @@ export class Spark implements Renderable {
 			context.lineTo(x - velX * 2, y - velY * 2);
 			context.stroke();
 		}
+
+		context.strokeStyle = tempStroke;
+		context.lineCap = tmpLineCap
+	}
+
+	/** 파이어볼을 그린다. */
+	private renderFireball(context: CanvasRenderingContext2D) {
+
+		const tmpFillStyle = context.fillStyle;
+
 		
-		context.strokeStyle = getFireballStyle(this.life);
-		context.beginPath();
-		context.moveTo(this.x, this.y);
-		if (this.axis == "h") {
-			context.lineTo(this.x, this.y + this.len);
-		} else {
-			context.lineTo(this.x + this.len, this.y);
-		}
-		context.stroke();
+		let x = this.x;
+		let y = this.y;
+		let p = Math.abs(this.life / uniformLife);
+		let width = p * p * this.direction * this.len / 4;
+
+		let g : CanvasGradient = (this.axis == "h")?  context.createLinearGradient(x + width, y, x, y) :
+		context.createLinearGradient(x, y + width, x, y);
+
+		g.addColorStop(0, "#000000");
+		g.addColorStop(0.3, "#884310");
+		g.addColorStop(0.7, "#FFCE58");
+		g.addColorStop(1.0, "#FFFFFF");
+		context.fillStyle = g;
+		
+		if (this.axis == "h") context.fillRect(x, y, width, this.len);
+		else context.fillRect(x, y, this.len, width);
+
+		context.fillStyle = tmpFillStyle;
+	}
+
+
+	/** 이 스파크에 대한 모든 것을 그린다. */
+	render(context: CanvasRenderingContext2D): void {
+		context.globalCompositeOperation = "screen";
+
+		this.renderParticles(context);
+		this.renderFireball(context);
 
 		context.globalCompositeOperation = "source-over";
-		context.strokeStyle = tempStroke;
 	}
 	
 	get invalid() { return this.life < 0; }

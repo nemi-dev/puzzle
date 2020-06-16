@@ -8,11 +8,12 @@ declare global {
 import PuzzleSet from './PuzzleSet'
 import RAFPulseClock from './RAFPulseClock'
 import Game from './Game'
-import MouseInput from './Input';
+import { MouseInput, TouchInput } from './Input';
 
 let game : Game;
 let clock : RAFPulseClock;
-let input : MouseInput;
+let mouseInput : MouseInput;
+let touchInput : TouchInput;
 let puzzleSet : PuzzleSet;
 let puzzleSets : PuzzleSet[];
 
@@ -255,19 +256,27 @@ loadPuzzleSets().then((sets) => {
 	game.completeHandlers.push(setButtonsAsComplete, popStory);
 	renderPreview(puzzleSet);
 
-	input = new MouseInput();
-	input.scale = scale;
-	input.connect(gameCanvas, game);
+	// mouseInput = new MouseInput();
+	// mouseInput.scale = scale;
+	// mouseInput.connect(gameCanvas, game);
+
+	touchInput = new TouchInput();
+	touchInput.scale = scale;
+	touchInput.connect(gameCanvas, game);
 
 	clock = new RAFPulseClock(t => {
-		input.update();
-		game.update(t, input);
+		// mouseInput.update();
+		touchInput.update();
+		// game.update(t, mouseInput.coordinate);
+		game.update(t, touchInput.coordinate);
 		game.render(gameContext);
 		game.timer.render(timerContext);
 	});
 	
 	clock.run();
 	window.game = game;
+
+	
 
 });
 
