@@ -8,10 +8,14 @@ declare global {
 import PuzzleSet from './PuzzleSet'
 import RAFPulseClock from './RAFPulseClock'
 import Game from './Game'
-import { MouseInput, TouchInput } from './Input';
+import { MouseInput, TouchInput, Detector } from './Input';
 
 let game : Game;
 let clock : RAFPulseClock;
+
+let detector : Detector;
+let input : MouseInput | TouchInput;
+
 let mouseInput : MouseInput;
 let touchInput : TouchInput;
 let puzzleSet : PuzzleSet;
@@ -250,34 +254,59 @@ loadPuzzleSets().then((sets) => {
 
 	puzzleSet = sets[puzzleSelector.value];
 	let size = sizeInput.valueAsNumber;
-	let scale = gameCanvas.width / gameCanvas.getBoundingClientRect().width;
 
 	game = new Game(size, puzzleSet, horizontalMargin, verticalMargin, boardLength, timerHeight);
 	game.completeHandlers.push(setButtonsAsComplete, popStory);
 	renderPreview(puzzleSet);
+	window.game = game;
+	game.render(gameContext);
+	game.timer.render(timerContext);
 
 	// mouseInput = new MouseInput();
 	// mouseInput.scale = scale;
 	// mouseInput.connect(gameCanvas, game);
 
-	touchInput = new TouchInput();
-	touchInput.scale = scale;
-	touchInput.connect(gameCanvas, game);
+	detector = new Detector();
+	return detector.getInterface(gameCanvas);
+	// touchInput = new TouchInput();
+	// touchInput.scale = scale;
+	// touchInput.connect(gameCanvas, game);
+
+	// clock = new RAFPulseClock(t => {
+	// 	// mouseInput.update();
+	// 	touchInput.update();
+	// 	// game.update(t, mouseInput.coordinate);
+	// 	game.update(t, touchInput.coordinate);
+	// 	game.render(gameContext);
+	// 	game.timer.render(timerContext);
+	// });
+	
+	// clock.run();
+
+	
+
+}).then(v => {
+	if (v == "mouse") {
+		input = new MouseInput();
+	} else if (v == "touch") {
+		input = new TouchInput();
+	}
+
+	let scale = gameCanvas.width / gameCanvas.getBoundingClientRect().width;
+	input.scale = scale;
+	input.connect(gameCanvas, game);
 
 	clock = new RAFPulseClock(t => {
-		// mouseInput.update();
-		touchInput.update();
-		// game.update(t, mouseInput.coordinate);
-		game.update(t, touchInput.coordinate);
+		input.update();
+		game.update(t, input.coordinate);
 		game.render(gameContext);
 		game.timer.render(timerContext);
 	});
-	
+
 	clock.run();
-	window.game = game;
-
-	
-
+	if (input instanceof MouseInput) input.invokeStart(detector.event as MouseEvent);
+	else if (input instanceof TouchInput) input.invokeStart(detector.event as TouchEvent);
+	// input.invokeStart(detector.event);
 });
 
 
