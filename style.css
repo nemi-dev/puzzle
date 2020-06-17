@@ -79,6 +79,7 @@ button:disabled {
 
 #story {
 	margin: auto;
+	font-weight: bold;
 }
 
 #config {
@@ -133,8 +134,6 @@ button.sizer {
 
 select {
 	font-size: 100%;
-	background: none;
-	color: #FFFFFF;
 }
 
 input[type="radio"] {

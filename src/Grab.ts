@@ -2,7 +2,7 @@ import Piece from "./Piece";
 import Game from "./Game";
 import { getPosition } from "./utils";
 import { CoordState } from "./Input";
-import { willHit, clone, assign } from "./Physical";
+import { willHit } from "./Physical";
 
 const maximumTapDistance = 31
 
@@ -33,7 +33,7 @@ export default class Grab {
 	 * 이 값이 'h'이면 퍼즐 조각을 좌우좌로 움직일 수 있고, 퍼즐 중에서 행(row)이 선택된 것이다.
 	 * 'v'이면 퍼즐 조각을 세로로 움직일 수 있고, 열(col)이 선택된 것이다.
 	 */
-	moveAxis: "v" | "h" | null = null;
+	moveAxis: "v" | "h" = null;
 
 	/** (rAF-sync) 마우스를 누를 때 실행된다. */
 	onMousedown(m: CoordMessage, game: Game) {

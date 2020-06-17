@@ -263,9 +263,15 @@ export default class Game implements MouseInputListener, TouchInputListener {
 		return ar;
 	}
 
-	/** 불똥을 튄다. */
+
+	/** 불똥을 튀기긴 하는데 x,y를 조각의 왼쪽 위 끝 좌표로 간주하고 direction이 음수이면 알아서 위치를 조정한다. */
 	createSpark(x : number, y : number, axis : "h" | "v", direction : number) {
-		this.sprites.push(new Spark(x, y, this.len / this.size, axis, direction));
+		const len = this.len / this.size;
+		if (direction == -1) {
+			if (axis == "h") x += len;
+			else if (axis == "v") y += len;
+		}
+		this.sprites.push(new Spark(x, y, len, axis, direction));
 	}
 
 

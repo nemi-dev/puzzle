@@ -138,11 +138,7 @@ export default class Piece implements Physical {
 			if (this.nearX()) {
 				this.x = this._destX;
 				this._destX = null;
-				if (this.velX) {
-					let x = this.x;
-					if (this.velX > 0) x += this.size;
-					game.createSpark(x, this.y, "h", - Math.sign(this.velX));
-				}
+				if (this.velX) game.createSpark(this.x, this.y, "h", - Math.sign(this.velX));
 				this.velX = 0;
 			}
 		}
@@ -151,11 +147,7 @@ export default class Piece implements Physical {
 			if (this.nearY()) {
 				this.y = this._destY;
 				this._destY = null;
-				if (this.velY) {
-					let y = this.y;
-					if (this.velY > 0) y += this.size;
-					game.createSpark(this.x, y, "v", - Math.sign(this.velY));
-				}
+				if (this.velY) game.createSpark(this.x, this.y, "v", - Math.sign(this.velY));
 				this.velY = 0;
 			}
 		}
@@ -211,21 +203,13 @@ export default class Piece implements Physical {
 		if (this._destX != null) {
 			this.x = this._destX;
 			this._destX = null;
-			if (this.velX) {
-				let x = this.x;
-				if (this.velX > 0) x += this.size;
-				game.createSpark(x, this.y, "h", - Math.sign(this.velX))
-			}
+			if (this.velX) game.createSpark(this.x, this.y, "h", - Math.sign(this.velX));
 			this.velX = 0;
 		}
 		if (this._destY != null) {
 			this.y = this._destY;
 			this._destY = null;
-			if (this.velY) {
-				let y = this.y;
-				if (this.velY > 0) y += this.size;
-				game.createSpark(this.x, y, "v", - Math.sign(this.velY));
-			}
+			if (this.velY) game.createSpark(this.x, this.y, "v", - Math.sign(this.velY));
 			this.velY = 0;
 		}
 	}

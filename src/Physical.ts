@@ -20,19 +20,3 @@ export function willHit(a : Physical, b : Physical, direction : "h" | "v") {
 	}
 	return aStart < bEnd && bStart < aEnd;
 }
-
-/** Physical의 속성을 가지고 있는 어떤 객체에서 Physical의 속성만을 뽑아내 복사한다. */
-export function clone(src : Physical) : Physical {
-	let { x, y, size, velX, velY } = src;
-	return { x, y, size, velX, velY }
-}
-
-/** target의 각 Physical 속성이 src의 것과 같게 한다. */
-export function assign(target : Physical, src : Physical) {
-	target.x = src.x;
-	target.y = src.y;
-	// 아직까진 모든 조각의 크기가 같으므로 생략한다.
-	// target.size = src.size
-	target.velX = src.velX;
-	target.velY = src.velY;
-}

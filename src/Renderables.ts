@@ -162,7 +162,10 @@ export class Spark implements Renderable {
 	
 }
 
+
+const uniformFlashLife = 70;
 export class Flashbang implements Renderable {
+	private life = uniformFlashLife;
 	update(game: Game): void {
 		throw new Error("Method not implemented.");
 	}
