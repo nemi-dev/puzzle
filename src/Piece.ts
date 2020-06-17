@@ -186,14 +186,14 @@ export default class Piece implements Physical {
 	 */
 	render(context: CanvasRenderingContext2D, showLabel = true) {
 		context.fillStyle = 'white';
-		context.lineWidth = 1;
-		context.strokeRect(this.x, this.y, this.size, this.size);
+		context.lineWidth = 0.5;
 		context.drawImage(this.texture, this.sx, this.sy, this.srcSize, this.srcSize, this.x, this.y, this.size, this.size);
+		context.strokeRect(this.x, this.y, this.size, this.size);
 		
 		if (showLabel) {
 			let fontSize = Math.floor(this.size/3);
 			context.font = fontSize + 'px "Exo 2"';
-			context.lineWidth = 3;
+			context.lineWidth = 5;
 
 			let { width } = context.measureText(this.label);
 			let x = this.x + width / 2 + 4;

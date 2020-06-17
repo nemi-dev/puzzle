@@ -26,6 +26,14 @@ router.get('/hit.wav', (req, res) => {
 	res.sendFile(path.resolve(__dirname, 'hit.wav'));
 });
 
+router.get('/settings.svg', (req, res) => {
+	res.sendFile(path.resolve(__dirname, 'settings.svg'));
+});
+
+router.get('/info.svg', (req, res) => {
+	res.sendFile(path.resolve(__dirname, 'info.svg'));
+});
+
 router.get('/img/:name', (req, res, next) => {
 	if (req.params.name.endsWith('.png')) {
 		res.sendFile(path.resolve(__dirname, 'img', req.params.name))

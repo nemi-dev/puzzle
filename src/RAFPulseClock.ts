@@ -6,7 +6,7 @@ export default class RAFPulseClock {
 
 	private a: FrameRequestCallback = null;
 
-	constructor(update : FrameRequestCallback) {
+	constructor(update? : FrameRequestCallback) {
 		this.update = update;
 	}
 

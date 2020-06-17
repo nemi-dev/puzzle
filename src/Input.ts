@@ -77,35 +77,31 @@ export class CoordState {
 /** 입력 인터페이스를 눈치껏 알아채는 객체 */
 export class Detector {
 
-	private source : HTMLElement;
+	/** 이벤트의 타겟이 메인 타겟과 같을 경우 이벤트를 저장한다. */
 	public event : MouseEvent | TouchEvent;
 
 	private disconnect() {
-		this.source.removeEventListener('mousedown', this.mouse);
-		this.source.removeEventListener('touchstart', this.touch);
+		document.removeEventListener('mousedown', this.mouse);
+		document.removeEventListener('touchstart', this.touch);
 	}
 
 	private mouse : (ev : MouseEvent) => void
 	private touch : (ev : TouchEvent) => void
 
-	getInterface(source : HTMLElement) : Promise<"mouse" | "touch"> {
-		this.source = source;
-		return new Promise((a, b) => {
+	public whenItsMouse : (ev : MouseEvent) => void
+	public whenItsTouch : (ev : TouchEvent) => void
+
+	open() {
 			this.mouse = ev => {
-				ev.preventDefault();
+				this.whenItsMouse(ev);
 				this.disconnect();
-				this.event = ev;
-				a("mouse");
 			};
 			this.touch = ev => {
-				ev.preventDefault();
+				this.whenItsTouch(ev);
 				this.disconnect();
-				this.event = ev;
-				a("touch");
 			}
-			this.source.addEventListener('mousedown', this.mouse);
-			this.source.addEventListener('touchstart', this.touch);
-		});
+			document.addEventListener('mousedown', this.mouse);
+			document.addEventListener('touchstart', this.touch);
 	}
 
 }

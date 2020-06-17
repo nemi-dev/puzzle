@@ -36,11 +36,3 @@ export function assign(target : Physical, src : Physical) {
 	target.velX = src.velX;
 	target.velY = src.velY;
 }
-
-declare global {
-	interface Window {
-		willHit : (a : Physical, b : Physical, direction : "h" | "v") => boolean
-	}
-}
-
-window.willHit = willHit;

@@ -2,7 +2,7 @@
  * PuzzleSet은 그림, 정사각형 영역, 해결 가능 여부를 모아놓은 것이다.  
  * 행이나 열을 뒤집는 기능 따위는 없다. 
  */
-export default class PuzzleSet implements PuzzleSetData {
+export default class PuzzleSet {
 	title : string
 	img : string
 	story : string
@@ -10,7 +10,6 @@ export default class PuzzleSet implements PuzzleSetData {
 	top : number
 	size : number
 	solvable : boolean
-	
 	texture : HTMLImageElement
 
 	/**

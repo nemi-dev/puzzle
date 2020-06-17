@@ -121,13 +121,13 @@ export default class Game implements MouseInputListener, TouchInputListener {
 		return [Math.floor(i / this._size), i % this._size];
 	}
 
-	constructor(size : number, puzzleSet : PuzzleSet, left : number, top : number, len : number, timerHeight : number) {
+	constructor(size : number, puzzleSet : PuzzleSet, left : number, top : number, len : number, timerWidth : number, timerHeight : number) {
 		
 		this.left = left;
 		this.top = top;
 		this.len = len;
 
-		this.timer = new Timer(left, len, timerHeight);
+		this.timer = new Timer(left, timerWidth, timerHeight);
 		this.viewWidth = left * 2 + len;
 		this.viewHeight = top * 2 + len + timerHeight;
 		this._size = size;
@@ -384,10 +384,10 @@ export default class Game implements MouseInputListener, TouchInputListener {
 	 * - input.pulse()
 	 *  - 현재 값이 이전 값으로(.beforeX, .beforeY) 전이된다.
 	 * */
-	update(t : DOMHighResTimeStamp, coord : CoordState) {
+	update(t : DOMHighResTimeStamp, coord? : CoordState) {
 		this.handlePlay(t);
 
-		if (this.grab.piece) {
+		if (this.grab.piece && coord) {
 			this.grab.update(this, coord);
 		}
 		

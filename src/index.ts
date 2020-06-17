@@ -1,10 +1,3 @@
-declare global {
-	interface Window {
-		game : Game
-	}
-}
-
-
 import PuzzleSet from './PuzzleSet'
 import RAFPulseClock from './RAFPulseClock'
 import Game from './Game'
@@ -16,10 +9,13 @@ let clock : RAFPulseClock;
 let detector : Detector;
 let input : MouseInput | TouchInput;
 
-let mouseInput : MouseInput;
-let touchInput : TouchInput;
 let puzzleSet : PuzzleSet;
 let puzzleSets : PuzzleSet[];
+
+const startButton = document.getElementById('start');
+const stopButton = document.getElementById('stop');
+const nextButton = document.getElementById('next');
+const randomButton = document.getElementById('random');
 
 const previewWrapper = document.getElementById('puzzle-preview');
 
@@ -31,27 +27,46 @@ const gameContext = gameCanvas.getContext('2d');
 const previewContext = previewCanvas.getContext('2d');
 const timerContext = timerCanvas.getContext('2d');
 
+const horizontalMargin = 20;
+const verticalMargin = 20;
+const boardLength = gameCanvas.width - horizontalMargin * 2;
+
+const timerWidth = timerCanvas.width - horizontalMargin * 2;
+const timerHeight = timerCanvas.height;
+
 const story = document.getElementById('story');
 
 gameContext.textAlign = 'center';
 gameContext.textBaseline = 'middle';
 
-timerContext.textAlign = 'center';
 timerContext.textBaseline = 'middle';
 timerContext.fillStyle = '#FFFFFF';
 
-const horizontalMargin = 20;
-const verticalMargin = 20;
-const boardLength = gameCanvas.width - horizontalMargin * 2;
-const timerHeight = timerCanvas.height;
+const config = document.getElementById('config');
+const article = document.getElementById('article');
 
-const sizeInput = document.getElementById('size') as HTMLInputElement;
+document.getElementById('show-config').addEventListener('click', ev => {
+	config.hidden = !config.hidden;
+});
+document.getElementById('config-close').addEventListener('click', ev => {
+	config.hidden = true;
+});
+
+document.getElementById('show-info').addEventListener('click', ev => {
+	window.scrollTo({ top : article.getBoundingClientRect().top - 20, behavior : "smooth" })
+})
+
+const sizeDecrease = document.getElementById('size-decrease') as HTMLButtonElement;
+const sizeIncrease = document.getElementById('size-increase') as HTMLButtonElement;
+const sizeView = document.getElementById('size-view');
+
+let puzzleSize = 3;
+const minSize = 3;
+const maxSize = 9;
+
+
 const puzzleSelector = document.getElementById('puzzle-selector') as HTMLSelectElement;
 
-const startButton = document.getElementById('start') as HTMLButtonElement;
-const stopButton = document.getElementById('stop') as HTMLButtonElement;
-const nextButton = document.getElementById('next') as HTMLButtonElement;
-const randomButton = document.getElementById('random') as HTMLButtonElement;
 
 const blankPositionSelector = {
 	topLeft : document.getElementById('blank-pos-top-left') as HTMLInputElement,
@@ -121,12 +136,8 @@ function setButtonsAsComplete() {
 function renderPreview({ texture, left, top, size } : PuzzleSet) {
 	let { width, height } = previewCanvas;
 	previewContext.clearRect(0, 0, width, height);
-	previewContext.drawImage(
-		texture, left, top, size, size,
-		horizontalMargin, verticalMargin, width - horizontalMargin * 2, height - verticalMargin * 2
-	)
+	previewContext.drawImage(texture, left, top, size, size, 0, 0, width, height);
 }
-
 
 function popStory() {
 	previewWrapper.hidden = true;
@@ -139,11 +150,16 @@ function resetStory() {
 	story.hidden = true;
 }
 
-function setPuzzleSize(ev : Event) {
+
+function setSize(v : number, bottom : boolean, right : boolean) {
+	game.setSize(v, bottom, right);
+	setButtonsAsInitial();
+	resetStory();
+}
+
+function puzzleChangeHandler(ev : Event) {
 	if (game.checkBeforeEnd()) {
-		game.setSize(sizeInput.valueAsNumber, ...decodeBlank());
-		setButtonsAsInitial();
-		resetStory();
+		setSize(puzzleSize, ...decodeBlank());
 	} else {
 		ev.preventDefault();
 		return false;
@@ -218,12 +234,37 @@ loadPuzzleSets().then((sets) => {
 		}
 	});
 
-	blankPositionSelector.topLeft.addEventListener('input', setPuzzleSize);
-	blankPositionSelector.topRight.addEventListener('input', setPuzzleSize);
-	blankPositionSelector.bottomLeft.addEventListener('input', setPuzzleSize);
-	blankPositionSelector.bottomRight.addEventListener('input', setPuzzleSize);
+	blankPositionSelector.topLeft.addEventListener('input', puzzleChangeHandler);
+	blankPositionSelector.topRight.addEventListener('input', puzzleChangeHandler);
+	blankPositionSelector.bottomLeft.addEventListener('input', puzzleChangeHandler);
+	blankPositionSelector.bottomRight.addEventListener('input', puzzleChangeHandler);
 
-	sizeInput.addEventListener('change', setPuzzleSize);
+	// sizeInput.addEventListener('change', puzzleChangeHandler);
+	sizeDecrease.addEventListener('click', ev => {
+		if (game.checkBeforeEnd()) {
+			puzzleSize -= 1;
+			sizeIncrease.disabled = false;
+			sizeView.innerText = puzzleSize.toString();
+			if (puzzleSize == minSize) sizeDecrease.disabled = true;
+			setSize(puzzleSize, ...decodeBlank());
+		} else {
+			ev.preventDefault();
+			return false;
+		}
+	});
+
+	sizeIncrease.addEventListener('click', ev => {
+		if (game.checkBeforeEnd()) {
+			puzzleSize += 1;
+			sizeDecrease.disabled = false;
+			sizeView.innerText = puzzleSize.toString();
+			if (puzzleSize == maxSize) sizeIncrease.disabled = true;
+			setSize(puzzleSize, ...decodeBlank());
+		} else {
+			ev.preventDefault();
+			return false;
+		}
+	});
 
 	puzzleSelector.addEventListener('change', ev => {
 		if (game.checkBeforeEnd()) {
@@ -253,61 +294,48 @@ loadPuzzleSets().then((sets) => {
 	});
 
 	puzzleSet = sets[puzzleSelector.value];
-	let size = sizeInput.valueAsNumber;
+	// let size = sizeInput.valueAsNumber;
 
-	game = new Game(size, puzzleSet, horizontalMargin, verticalMargin, boardLength, timerHeight);
+	game = new Game(puzzleSize, puzzleSet, horizontalMargin, verticalMargin, boardLength, timerWidth, timerHeight);
 	game.completeHandlers.push(setButtonsAsComplete, popStory);
 	renderPreview(puzzleSet);
-	window.game = game;
-	game.render(gameContext);
-	game.timer.render(timerContext);
-
-	// mouseInput = new MouseInput();
-	// mouseInput.scale = scale;
-	// mouseInput.connect(gameCanvas, game);
-
-	detector = new Detector();
-	return detector.getInterface(gameCanvas);
-	// touchInput = new TouchInput();
-	// touchInput.scale = scale;
-	// touchInput.connect(gameCanvas, game);
-
-	// clock = new RAFPulseClock(t => {
-	// 	// mouseInput.update();
-	// 	touchInput.update();
-	// 	// game.update(t, mouseInput.coordinate);
-	// 	game.update(t, touchInput.coordinate);
-	// 	game.render(gameContext);
-	// 	game.timer.render(timerContext);
-	// });
-	
-	// clock.run();
-
-	
-
-}).then(v => {
-	if (v == "mouse") {
-		input = new MouseInput();
-	} else if (v == "touch") {
-		input = new TouchInput();
-	}
 
 	let scale = gameCanvas.width / gameCanvas.getBoundingClientRect().width;
-	input.scale = scale;
-	input.connect(gameCanvas, game);
 
 	clock = new RAFPulseClock(t => {
-		input.update();
-		game.update(t, input.coordinate);
+		game.update(t);
 		game.render(gameContext);
 		game.timer.render(timerContext);
 	});
 
+	let updateFunctionOnInputConnected = (t : DOMHighResTimeStamp) => {
+		input.update();
+		game.update(t, input.coordinate);
+		game.render(gameContext);
+		game.timer.render(timerContext);
+	}
+
 	clock.run();
-	if (input instanceof MouseInput) input.invokeStart(detector.event as MouseEvent);
-	else if (input instanceof TouchInput) input.invokeStart(detector.event as TouchEvent);
-	// input.invokeStart(detector.event);
+
+	detector = new Detector();
+
+	detector.whenItsMouse = ev => {
+		input = new MouseInput();
+		input.scale = scale;
+		input.connect(gameCanvas, game);
+		clock.update = updateFunctionOnInputConnected;
+		if (ev.target == gameCanvas) input.invokeStart(ev);
+	}
+
+	detector.whenItsTouch = ev => {
+		input = new TouchInput();
+		input.scale = scale;
+		input.connect(gameCanvas, game);
+		clock.update = updateFunctionOnInputConnected;
+		if (ev.target == gameCanvas) input.invokeStart(ev);
+	}
+
+	detector.open();
+
 });
-
-
 

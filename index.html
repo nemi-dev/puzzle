@@ -8,52 +8,62 @@
 	<title>LAST_ORIGIN Slide Puzzle</title>
 </head>
 <body>
-	<audio src="hit.wav" id="hit-sound"></audio>
-	<div class="area" style="margin: 10px;">
+	<div class="game-button-group" style="margin: 10px;">
 		<button id="start">시작하기</button>
 		<button id="stop" hidden>그만두기</button>
 		<button id="next" hidden>다음 퍼즐</button>
 		<button id="random">무작위</button>
 	</div>
 	<div class="area area-fit">
-		<div id="main-canvas-wrapper">
-			<div><canvas id="timer-canvas" width="720" height="120" style="width: 360px;"></canvas></div>
-			<div><canvas id="game-canvas" width="720" height="720" style="width: 360px;"></canvas></div>
+		<div id="first-wrapper">
+			<canvas id="timer-canvas" width="480" height="60" style="width: 240px;"></canvas>
+			<canvas id="game-canvas" width="720" height="720" style="width: 360px;"></canvas>
 		</div>
-		<div id="puzzle-preview">
-			<h3 class="center">미리보기</h3>
-			<canvas id="preview-canvas" width="480" height="480" style="vertical-align: top; width: 360px;"></canvas>
+		<div id="second-wrapper">
+			<div id="puzzle-preview">
+				<canvas id="preview-canvas" width="400" height="400"></canvas>
+			</div>
+			<div id="story" hidden></div>
 		</div>
-		<div id="story" hidden></div>
 	</div>
-	<div class="box">
-		<div class="item"><!--
-		--><div class="half"><label for="size">크기 : </label><input type="number" id="size" value="3" min="3" max="9" step="1"></div><!--
-			--><div class="half"><label for="puzzle-selector">퍼즐셋 : </label><select id="puzzle-selector"></select></div>
-		</div>
+
+	<div id="config" hidden>
 		<div class="item">
-			<b>완성된 퍼즐에서 빈 칸의 위치</b>
-			<div>
-			<div class="inline-block"><input type="radio" name="blank-pos" id="blank-pos-top-left"><label for="blank-pos-top-left">↖️</label></div><!--
-			--><div class="inline-block"><input type="radio" name="blank-pos" id="blank-pos-top-right"><label for="blank-pos-top-right">↗️</label></div><!--
-			--><div class="inline-block"><input type="radio" name="blank-pos" id="blank-pos-bottom-left" checked><label for="blank-pos-bottom-left">↙️</label></div><!--
-			--><div class="inline-block"><input type="radio" name="blank-pos" id="blank-pos-bottom-right"><label for="blank-pos-bottom-right">↘️</label></div><!--
+			<span class="config-label">크기</span>
+			<button id="size-decrease" class="sizer" disabled>-</button>
+			<span id="size-view">3</span>
+			<button id="size-increase" class="sizer">+</button>
+		</div>
+		<div class="item"><label class="config-label" for="puzzle-selector">퍼즐셋</label><select id="puzzle-selector"></select></div>
+		<div class="item">
+			<div class="config-label">완성된 퍼즐에서 빈 칸의 위치</div>
+			<div style="text-align: center;">
+			<input type="radio" name="blank-pos" id="blank-pos-top-left"><label for="blank-pos-top-left">↖️</label><!--
+			--><input type="radio" name="blank-pos" id="blank-pos-top-right"><label for="blank-pos-top-right">↗️</label><br><!--
+			--><input type="radio" name="blank-pos" id="blank-pos-bottom-left" checked><label for="blank-pos-bottom-left">↙️</label><!--
+			--><input type="radio" name="blank-pos" id="blank-pos-bottom-right"><label for="blank-pos-bottom-right">↘️</label><!--
 			--></div>
 		</div>
 		<div class="item">
-			<div><b>퍼즐에 숫자 표시하기</b></div>
-			<input type="radio" name="show-label" id="show-label-none" checked><label for="show-label-none">안 함</label>
-			<input type="radio" name="show-label" id="show-label-phone"><label for="show-label-phone">휴대폰</label>
-			<input type="radio" name="show-label" id="show-label-keypad"><label for="show-label-keypad">키패드</label>
+			<div class="config-label">퍼즐에 숫자 표시하기</div>
+			<input type="radio" name="show-label" id="show-label-none" checked><label for="show-label-none">안 함</label><!--
+			--><input type="radio" name="show-label" id="show-label-phone"><label for="show-label-phone">휴대폰</label><!--
+			--><input type="radio" name="show-label" id="show-label-keypad"><label for="show-label-keypad">키패드</label>
+		</div>
+		<div class="item" style="text-align: center;">
+			<button id="config-close">닫기</button>
 		</div>
 	</div>
-	<div class="article" style="text-align: left;">
-		<h2 style="text-align: center;">이게 뭐죠?</h2>
+	<div id="article">
+		<h1>Slide Puzzle</h1>
+		<h3>from LAST ORIGIN</h3>
+		<h2 style="padding-top: 1em;">이게 뭐죠?</h2>
 		<p>모바일 <small>유사</small>게임 라스트오리진의 구성 요소 중 하나인 미니게임 슬라이드 퍼즐을 그대로 구현한 것입니다. 퍼즐을 즐기고 싶다면 그냥 라오에 들어있는 것을 플레이해도 되지만, 기능이 한정적이기 때문에 직접 만들어봤습니다.</p>
-		<p><b>특징</b></p>
+		<h3>특징</h3>
 		<ul>
 			<li><b>커스터마이징 가능</b><br>퍼즐 크기와 빈칸의 위치를 바꿀 수 있고, 퍼즐 셋을 직접 선택할 수 있습니다.</li>
-			<li><b>"슬라이드" 퍼즐</b><br>조각을 드래그 또는 스와이프하여 움직일 수 있습니다. 손맛 따위는 옛날에 개나 줘 버린 시점에 원래부터 오토가 없는 퍼즐에서만큼은 손맛을 만끽해 보십시오.<br>기존 방식의 짧은 클릭/터치로도 조각을 움직일 수 있습니다.</li>
+			<li><b>"슬라이드" 퍼즐</b><br>조각을 드래그 또는 스와이프하여 움직일 수 있습니다. 손맛 따위는 옛날에 개나 줘 버렸지만, 원래부터 오토가 없는 퍼즐에서만큼은 손맛을 만끽해 보십시오.<br>기존 방식의 짧은 클릭/터치로도 조각을 움직일 수 있습니다.</li>
+			<li><b>조각 여러 개 움직이기</b><br>왜 조각을 여러 개 움직이려는데 하나씩 일일이 클릭해야 하죠? 조각 여러 개를 한꺼번에 움직일 수 있습니다.</li>
 			<li><b>퍼즐 조각 번호 표시</b><br>퍼즐 조각에 번호가 나타나도록 할 수 있습니다. 휴대폰 넘버패드(위에서 아래로 증가), 키패드(아래에서 위로 증가) 방식 중에서 선택 가능합니다.</li>
 			<li><b>광고 없음</b><br>이 사이트에는 광고가 전혀 없습니다. 그리고 과금 요소도 없습니다.</li>
 		</ul>
@@ -64,6 +74,10 @@
 		</a>
 		<div style="font-size: 50%;">클릭시 링크로 이동합니다</div>
 	</footer>
+	<span class="floating">
+		<button id="show-config"><img src="/settings.svg"></button><br>
+		<button id="show-info"><img src="/info.svg"></button>
+	</span>
 </body>
 <script src="app.js"></script>
 </html>

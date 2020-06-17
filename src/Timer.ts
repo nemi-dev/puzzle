@@ -69,7 +69,7 @@ export default class Timer {
 
 	set height (v : number) {
 		this._height = v;
-		this.fontSize = v - 18;
+		this.fontSize = v - 1;
 	}
 
 	constructor(left : number, width : number, height : number) {

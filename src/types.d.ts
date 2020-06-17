@@ -1,13 +1,3 @@
-declare interface PuzzleSetData {
-	title : string
-	img : string
-	story : string
-	left : number
-	top : number
-	size : number
-	solvable : boolean
-}
-
 declare interface Physical {
 	size? : number
 
