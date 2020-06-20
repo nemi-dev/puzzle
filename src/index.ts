@@ -51,7 +51,6 @@ document.getElementById('show-config').addEventListener('click', ev => {
 document.getElementById('config-close').addEventListener('click', ev => {
 	config.hidden = true;
 });
-
 document.getElementById('show-info').addEventListener('click', ev => {
 	window.scrollTo({ top : article.getBoundingClientRect().top - 20, behavior : "smooth" })
 })
@@ -294,8 +293,8 @@ loadPuzzleSets().then((sets) => {
 	});
 
 	puzzleSet = sets[puzzleSelector.value];
-	// let size = sizeInput.valueAsNumber;
 
+	_randomPuzzle(null);
 	game = new Game(puzzleSize, puzzleSet, horizontalMargin, verticalMargin, boardLength, timerWidth, timerHeight);
 	game.completeHandlers.push(setButtonsAsComplete, popStory);
 	renderPreview(puzzleSet);
@@ -315,24 +314,22 @@ loadPuzzleSets().then((sets) => {
 		game.timer.render(timerContext);
 	}
 
-	clock.run();
+	clock.start();
 
 	detector = new Detector();
 
 	detector.whenItsMouse = ev => {
 		input = new MouseInput();
-		input.scale = scale;
-		input.connect(gameCanvas, game);
+		input.connect(gameCanvas, game, scale);
 		clock.update = updateFunctionOnInputConnected;
-		if (ev.target == gameCanvas) input.invokeStart(ev);
+		if (ev.target == gameCanvas) input.onstart(ev);
 	}
 
 	detector.whenItsTouch = ev => {
 		input = new TouchInput();
-		input.scale = scale;
-		input.connect(gameCanvas, game);
+		input.connect(gameCanvas, game, scale);
 		clock.update = updateFunctionOnInputConnected;
-		if (ev.target == gameCanvas) input.invokeStart(ev);
+		if (ev.target == gameCanvas) input.onstart(ev);
 	}
 
 	detector.open();

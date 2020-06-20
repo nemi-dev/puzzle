@@ -1,7 +1,7 @@
 import Piece from "./Piece";
 import PuzzleSet from "./PuzzleSet";
 import { getRowCol, getPosition } from "./utils";
-import { CoordState } from "./Input";
+import { CoordinateState } from "./Input";
 import Grab from "./Grab";
 import Timer from "./Timer";
 import { Renderable, Spark } from "./Renderables";
@@ -34,7 +34,7 @@ function checkSolvable(model : number[], blankTag : number) {
 	return (inversion + ((size%2 == 0)? blankRow + 1 : 0)) % 2 == 0;
 }
 
-export default class Game implements MouseInputListener, TouchInputListener {
+export default class Game {
 	
 	/**
 	 * 게임 진행 중 여부
@@ -121,6 +121,7 @@ export default class Game implements MouseInputListener, TouchInputListener {
 		return [Math.floor(i / this._size), i % this._size];
 	}
 
+	
 	constructor(size : number, puzzleSet : PuzzleSet, left : number, top : number, len : number, timerWidth : number, timerHeight : number) {
 		
 		this.left = left;
@@ -292,32 +293,47 @@ export default class Game implements MouseInputListener, TouchInputListener {
 		return true;
 	}
 
-	/** rAF에 동기화된 마우스 클릭 핸들러 */
-	dispatchMousedown(m : CoordMessage) {
-		this.grab.onMousedown(m, this);
+	private messageQueue : CoordMessage[] = [];
 
-		// 아직 제 자리를 못 찾고 헤매는 조각이 있으면 곧바로 destX,destY 값을 적용시켜 즉시 이동한다.
-		for (const piece of this.pieces) {
-			if (piece.tag != this.blankTag) piece.getIntoPositionNow(this);
+	push(m : CoordMessage) {
+		this.messageQueue.unshift(m);
+	}
+
+	// 메시지 다 뺀다
+	dispatchAll() {
+		let m : CoordMessage;
+		while ((m = this.messageQueue.pop()) != null) {
+			switch(m.type) {
+				case "mousedown":
+				case "touchstart":
+					this.dispatchCoordstart(m);
+					break;
+				case "mouseup":
+				case "touchend":
+					this.dispatchCoordend(m);
+					break;
+			}
 		}
 	}
 
-	dispatchTouchstart(m : CoordMessage) {
-		this.grab.onMousedown(m, this);
+	/** rAF에 동기화된 마우스 클릭 핸들러 */
+	private dispatchCoordstart(m : CoordMessage) {
+		if (this.acceptCoordinate(m.startX, m.startY)) {
+			this.grab.onCoordstart(m, this);
 
-		// 아직 제 자리를 못 찾고 헤매는 조각이 있으면 곧바로 destX,destY 값을 적용시켜 즉시 이동한다.
-		for (const piece of this.pieces) {
-			if (piece.tag != this.blankTag) piece.getIntoPositionNow(this);
+			// 아직 제 자리를 못 찾고 헤매는 조각이 있으면 곧바로 destX,destY 값을 적용시켜 즉시 이동한다.
+			for (const piece of this.pieces) {
+				if (piece.tag != this.blankTag) piece.getIntoPositionNow(this);
+			}
 		}
 	}
 
 	/** rAF에 동기화된 마우스 놓기 핸들러 */
-	dispatchMouseup(m : CoordMessage) {
-		this.grab.onMouseup(m, this);
-	}
-
-	dispatchTouchend(m : CoordMessage) {
-		this.grab.onMouseup(m, this);
+	private dispatchCoordend(m : CoordMessage) {
+		// 아직까지 마우스 홀딩 상태를 grab.piece의 nullity만으로 판단하고 있다. 다른 플래그의 필요성은 아직 없는 것 갓다....
+		if (this.grab.piece) {
+			this.grab.onCoordend(m, this);
+		}
 	}
 
 	private _noop () {}
@@ -390,7 +406,7 @@ export default class Game implements MouseInputListener, TouchInputListener {
 	 * - input.pulse()
 	 *  - 현재 값이 이전 값으로(.beforeX, .beforeY) 전이된다.
 	 * */
-	update(t : DOMHighResTimeStamp, coord? : CoordState) {
+	update(t : DOMHighResTimeStamp, coord? : CoordinateState) {
 		this.handlePlay(t);
 
 		if (this.grab.piece && coord) {

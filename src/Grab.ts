@@ -1,8 +1,7 @@
 import Piece from "./Piece";
 import Game from "./Game";
 import { getPosition } from "./utils";
-import { CoordState } from "./Input";
-import { willHit } from "./Physical";
+import { CoordinateState } from "./Input";
 
 const maximumTapDistance = 31
 
@@ -35,9 +34,11 @@ export default class Grab {
 	 */
 	moveAxis: "v" | "h" = null;
 
-	/** (rAF-sync) 마우스를 누를 때 실행된다. */
-	onMousedown(m: CoordMessage, game: Game) {
-		// 여기서는 [blankRow, blankCol] != [row, col]이다. 만약 둘이 같다면 이것은 실행조차 되지 않는다.
+	/**
+	 * (rAF-sync) 마우스를 누를 때/터치를 시작할 때 실행된다.
+	 * 메시지의 유효성은 이전 단계에서 이미 검증을 한 상태이다. 유효하지 않은 지점을 클릭/터치했다면 이것은 아예 실행되지 않는다.
+	 * */
+	onCoordstart(m: CoordMessage, game: Game) {
 		let { startX: x, startY: y } = m;
 		let [blankRow, blankCol] = game.rowColOfBlank;
 		let [row, col] = game.getRowColAt(x, y);
@@ -57,7 +58,7 @@ export default class Grab {
 	}
 
 	/** (rAF-sync) 마우스를 놓을 때 실행된다. */
-	onMouseup(m: CoordMessage, game: Game) {
+	onCoordend(m: CoordMessage, game: Game) {
 		let { startX, startY, endX, endY, startTime, endTime } = m;
 		let distance = this.moveAxis == 'h'? endX - startX : endY - startY;
 		/**
@@ -239,7 +240,7 @@ export default class Grab {
 	}
 
 	/** 마우스를 누르고 있는 때에 한해 업데이트(rAF)가 발생할 때 호출된다. 즉, 실질적 업데이트와 같다. */
-	update(game: Game, coord : CoordState) {
+	update(game: Game, coord : CoordinateState) {
 		if (this.moveAxis == "h" && coord.beforeX != null) {
 			let x = coord.x - this.pieceOffsetX;
 			this.piece.velX = x - this.piece.x;
@@ -278,7 +279,7 @@ export default class Grab {
 				for (let b = a + gVsign; (b >= 0) && (b < maxCount); b += gVsign) {
 					const B = this.concern[b];
 					if (B.tag == blankTag) continue;
-					if (willHit(A, B, this.moveAxis)) {
+					if (Piece.willHit(A, B, this.moveAxis)) {
 						B[pos] = A[pos] + A[vel] + B.size * gVsign;
 					}
 				}
