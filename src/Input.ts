@@ -117,7 +117,7 @@ export class Detector {
 			this.disconnect();
 		}
 		document.addEventListener('mousedown', this.mouse);
-		document.addEventListener('touchstart', this.touch);
+		document.addEventListener('touchstart', this.touch, {passive : false});
 	}
 
 }
@@ -189,17 +189,20 @@ export class MouseInput {
 		let message = this.messageCache[ev.button];
 		delete this.messageCache[ev.button];
 
-		// 임시 메시지에 실제 마우스 놓기 데이터를 입력하여 메시지를 완성시킨다.
-		message.endX = x;
-		message.endY = y;
-		message.endTime = ev.timeStamp;
+		if (message) {
+			// 임시 메시지에 실제 마우스 놓기 데이터를 입력하여 메시지를 완성시킨다.
+			message.endX = x;
+			message.endY = y;
+			message.endTime = ev.timeStamp;
 
-		// 메시지를 큐에 입력한다.
-		this.listener.push(message);
+			// 메시지를 큐에 입력한다.
+			this.listener.push(message);
+
+			// 현재 rAF의 마우스 위치를 떼기 위치로 간주한다.
+			// input에다 좌표를 넣어두면 rAF 발생 시 current로 내려가겠지?
+			this.coordinate.input(x, y);
+		}
 		
-		// 현재 rAF의 마우스 위치를 떼기 위치로 간주한다.
-		// input에다 좌표를 넣어두면 rAF 발생 시 current로 내려가겠지?
-		this.coordinate.input(x, y);
 
 	}
 
@@ -346,7 +349,7 @@ export class TouchInput {
 		this.disconnect();
 		this.source = source;
 		this.listener = listener;
-		this.scale = 1;
+		this.scale = scale;
 		this.source.addEventListener('touchstart', this.onstart);
 		this.source.addEventListener('touchmove', this.onmove);
 		document.addEventListener('touchend', this.onend);

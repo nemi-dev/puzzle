@@ -238,7 +238,6 @@ loadPuzzleSets().then((sets) => {
 	blankPositionSelector.bottomLeft.addEventListener('input', puzzleChangeHandler);
 	blankPositionSelector.bottomRight.addEventListener('input', puzzleChangeHandler);
 
-	// sizeInput.addEventListener('change', puzzleChangeHandler);
 	sizeDecrease.addEventListener('click', ev => {
 		if (game.checkBeforeEnd()) {
 			puzzleSize -= 1;
