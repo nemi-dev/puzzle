@@ -53,18 +53,10 @@ export default class Timer {
 	/** 폭의 6분의 1 */
 	private w_6 : number
 
-	/** 뷰를 3등분한 기준점에서 십의 자리 숫자를 그릴 오프셋  */
-	private p : number
-
-	/** 뷰를 3등분한 기준점에서 일의 자리 숫자를 그릴 오프셋  */
-	private q : number
-
 	set width (v : number) {
 		this._width = v;
 		this.w_3 = v / 3;
 		this.w_6 = v / 6;
-		this.p = this.w_6 - v / 25;
-		this.q = this.w_6 + v / 25;
 	}
 
 	set height (v : number) {
@@ -110,7 +102,7 @@ export default class Timer {
 
 	render (context : CanvasRenderingContext2D) {
 		
-		let { y, left, w_3, w_6, p, q } = this;
+		let { y, left, w_3, w_6 } = this;
 		
 		context.clearRect(left, 0, this._width, this._height);
 		context.font = this.fontSize + 'px "Exo 2"';
