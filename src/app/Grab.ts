@@ -38,7 +38,7 @@ export default class Grab {
 	 * (rAF-sync) 마우스를 누를 때/터치를 시작할 때 실행된다.
 	 * 메시지의 유효성은 이전 단계에서 이미 검증을 한 상태이다. 유효하지 않은 지점을 클릭/터치했다면 이것은 아예 실행되지 않는다.
 	 * */
-	onCoordstart(m: CoordMessage, game: Game) {
+	onCoordstart(m: PointMessage, game: Game) {
 		let { startX: x, startY: y } = m;
 		let [blankRow, blankCol] = game.rowColOfBlank;
 		let [row, col] = game.getRowColAt(x, y);
@@ -58,7 +58,7 @@ export default class Grab {
 	}
 
 	/** (rAF-sync) 마우스를 놓을 때 실행된다. */
-	onCoordend(m: CoordMessage, game: Game) {
+	onCoordend(m: PointMessage, game: Game) {
 		let { startX, startY, endX, endY, startTime, endTime } = m;
 		let distance = this.moveAxis == 'h'? endX - startX : endY - startY;
 		/**

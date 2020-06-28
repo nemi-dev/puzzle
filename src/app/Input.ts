@@ -26,9 +26,8 @@ export class CoordinateState {
 	/*
 	 * DOM 이벤트가 발생했을 때 임시적으로 캡쳐한 위치  
 	 * 이것은 이동, 누름, 놓음 모든 종류의 이벤트를 받아들인다
-	 * Listener가 마우스 좌표를 받아들이면 퍼즐 조각에 바로 반영하지 않고, requestAnimationFrame이 돌아올 때까지 기다린다. (이벤트 핸들링이 rAF보다 훨씬 많이 발생한다.)  
-	 * 따라서 쏟아지는 이벤트로 인해 불필요하게 성능이 저하되는 것을 방지한다.  
-	 * 어떤 이벤트 루프에서 rAF가 발생하지 않으면 해당 루프로 받아들인 좌표는 버려지게 된다.
+	 * 처음에는 이벤트가 rAF보다 많이 발생할 것이라 예상하고 추가한 속성이었으나, 실제 프레임 생명주기는 이벤트와 rAF를 같은 사이클 내에 처리한다.
+	 * 이제 이 클래스에 남겨진 실질적 기능이라고는 누름과 놓음에 대해 적극적으로 대응하는 기능, MouseEvent와 TouchEvent를 거의 동일한 수준으로 추상화시키는 기능뿐이다.
 	 * */
 
 	/** 임시적으로 캡쳐한 입력 X좌표 */
@@ -93,40 +92,11 @@ export class CoordinateState {
 	}
 }
 
-/** 입력 인터페이스를 눈치껏 알아채는 객체 */
-export class Detector {
-
-	private disconnect() {
-		document.removeEventListener('mousedown', this.mouse);
-		document.removeEventListener('touchstart', this.touch);
-	}
-
-	private mouse : (ev : MouseEvent) => void
-	private touch : (ev : TouchEvent) => void
-
-	public whenItsMouse : (ev : MouseEvent) => void
-	public whenItsTouch : (ev : TouchEvent) => void
-
-	open() {
-		this.mouse = ev => {
-			this.whenItsMouse(ev);
-			this.disconnect();
-		};
-		this.touch = ev => {
-			this.whenItsTouch(ev);
-			this.disconnect();
-		}
-		document.addEventListener('mousedown', this.mouse);
-		document.addEventListener('touchstart', this.touch, {passive : false});
-	}
-
-}
-
 /**
- * 마우스 입력을 받아들여서 리스너에게 전달하는 클래스  
+ * 마우스 입력을 받아들여서 리스너에게 전달하는 클래스. 이 클래스의 목표 중 하나는 터치 인터페이스와 매우 흡사한 수준의 마우스 입력 처리를 수행하는 것이다.  
  * 이 클래스는 requestAnimationFrame()을 사용한 업데이트 패턴에 특화된 구조를 가지고 있다.  
- * 중요하고 양이 비교적 적은 이벤트(마우스 누름, 마우스 놓음)는 매 이벤트 루프마다 놓치지 않고 캡쳐해 두고, 압도적으로 많이 발생하고 중요하지 않은 이벤트(마우스 움직임)는 변화에 따라 "현재 상태"와 "직전 상태"만을 저장해 두고 rAF에서 그 상태를 참조하도록 하고 있다.  
- * 이 입력 객체는 특히 "마우스를 누를 때"에만 실제 좌표를 전달한다.
+ * 
+ * 실제 rAF와 마우스 움직임 이벤트 처리는 같은 사이클에서 일어난다. 그런데 한 사이클에서 다른 종류의 이벤트가 발생할 수 있기 때문에 어떤 이벤트가 먼저 발생했는지를 추적하기 위한 큐를 가지고 있다. 물론 DOM 표준으로도 이벤트를 들어온 순서대로 처리하겠지만, 이 클래스는 마우스/터치 이벤트를 거의 비슷한 수준으로 추상화한 메시지를 큐에 보관한다.
  */
 export class MouseInput {
 
@@ -143,7 +113,7 @@ export class MouseInput {
 	 * messagePool[n]은 n번 마우스 버튼 누름에 대응하는 임시 마우스 떼기 메시지이다.
 	 * n번 마우스 버튼 떼기가 발생하면 messagePool[n]에 있는 메시지를 꺼내서 end 값을 입력하고 큐에 넣는다.
 	 * */
-	private readonly messageCache : CoordMessage[] = [];
+	private readonly messageCache : PointMessage[] = [];
 
 	/** 어떤 컨트롤(특히 뷰 기반 컨트롤)에 "배율이 설정"되었고, 리스너에게 모델 좌표계 기반으로 메시지를 보내고 싶을 때 모든 이벤트에 이 값이 곱해진다. */
 	private scale : number
@@ -152,7 +122,7 @@ export class MouseInput {
 	public readonly coordinate = new CoordinateState();
 
 	/** 마우스 누름 이벤트 발생 시 실행된다.  */
-	public readonly onstart = (ev : MouseEvent) => {
+	private readonly start = (ev : MouseEvent) => {
 		ev.preventDefault();
 
 		let startX = ev.offsetX * this.scale;
@@ -160,12 +130,8 @@ export class MouseInput {
 		let id = ev.button;
 		let startTime = ev.timeStamp;
 
-		// pulse를 맞으면 currentX는 beforeX가 된다.
-		// 따라서 rAF가 발생하는 시점에서 이전 위치는 마우스 누름 위치로 간주된다.
+		// 현재 위치와 이전 위치를 마우스/터치 누름 위치로 한다.
 		this.coordinate.shim(startX, startY);
-
-		// 이것과 rAF 사이에 move가 발생하지 않으면 rAF 발생 시 혀재 위치 또한 마우스 누름 위치가 된다.
-		// rAF 발생 전에 move가 먼저 발생하면 input값을 덮어써서 걔들이 current값이 되겠지?
 		this.coordinate.input(startX, startY);
 
 		this.listener.push({ type : "mousedown", id, startX, startY, startTime });
@@ -176,12 +142,12 @@ export class MouseInput {
 		return false;
 	}
 
-	public readonly onmove = (ev : MouseEvent) => {
+	private readonly move = (ev : MouseEvent) => {
 		this.coordinate.input(ev.offsetX * this.scale, ev.offsetY * this.scale);
 	}
 
-	public readonly onend = (ev : MouseEvent) => {
-		/* MouseEvent.offsetX는 source 상대 위치이다. 띠용! */
+	private readonly end = (ev : MouseEvent) => {
+		// 마우스/터치 놓기 이벤트는 모두 버블 가능하므로 리스너가 도큐먼트이면 실제로 마우스 놓음이 발생한 엘리먼트가 타겟이 된다. 그리고 오프셋 값도 실제 타겟을 기반으로 결정된다.
 		let x = ev.offsetX * this.scale;
 		let y = ev.offsetY * this.scale;
 
@@ -197,9 +163,6 @@ export class MouseInput {
 
 			// 메시지를 큐에 입력한다.
 			this.listener.push(message);
-
-			// 현재 rAF의 마우스 위치를 떼기 위치로 간주한다.
-			// input에다 좌표를 넣어두면 rAF 발생 시 current로 내려가겠지?
 			this.coordinate.input(x, y);
 		}
 		
@@ -212,18 +175,18 @@ export class MouseInput {
 		this.source = source;
 		this.listener = listener;
 		this.scale = scale;
-		this.source.addEventListener('mousedown', this.onstart);
-		this.source.addEventListener('mousemove', this.onmove);
-		document.addEventListener('mouseup', this.onend);
+		source.addEventListener('mousedown', this.start);
+		source.addEventListener('mousemove', this.move);
+		document.addEventListener('mouseup', this.end);
 	}
 
 	/** 입력 컴포넌트 연결을 해제한다. */
 	disconnect () {
 		let source = this.source;
 		if (source) {
-			source.removeEventListener('mousedown', this.onstart);
-			source.removeEventListener('mousemove', this.onmove);
-			document.removeEventListener('mouseup', this.onend);
+			source.removeEventListener('mousedown', this.start);
+			source.removeEventListener('mousemove', this.move);
+			document.removeEventListener('mouseup', this.end);
 		}
 		this.source = null;
 		this.listener = null;
@@ -254,7 +217,7 @@ export class TouchInput {
 
 	private listener : Listener
 
-	private readonly messageCache : CoordMessage[] = []
+	private readonly messageCache : PointMessage[] = []
 
 	/**
 	 * 마우스는 항상 하나의 좌표지만 터치는 언제 어디서 어떤 터치가 생길지, 없어질지 모른다.
@@ -270,7 +233,7 @@ export class TouchInput {
 
 	scale : number = 1
 	
-	public readonly onstart = (ev : TouchEvent) => {
+	private readonly start = (ev : TouchEvent) => {
 		// 이게 없을 때 캔버스를 스와이프하면 페이지가 스크롤되고 탭을 하면 일부 환경에서 mouseup,mousedown을 일으킨다.
 		ev.preventDefault();
 
@@ -298,7 +261,7 @@ export class TouchInput {
 		return false;
 	}
 
-	public readonly onmove = (ev : TouchEvent) => {
+	private readonly move = (ev : TouchEvent) => {
 		for (const touch of ev.changedTouches) {
 			if (touch.identifier in this.touchStateMap)	{
 				const state = this.touchStateMap[touch.identifier];
@@ -309,7 +272,7 @@ export class TouchInput {
 		}
 	}
 
-	public readonly onend = (ev : TouchEvent) => {
+	private readonly end = (ev : TouchEvent) => {
 		for (const touch of ev.changedTouches) {
 			if (touch.identifier in this.touchStateMap)	{
 				const state = this.touchStateMap[touch.identifier];
@@ -350,9 +313,9 @@ export class TouchInput {
 		this.source = source;
 		this.listener = listener;
 		this.scale = scale;
-		this.source.addEventListener('touchstart', this.onstart);
-		this.source.addEventListener('touchmove', this.onmove);
-		document.addEventListener('touchend', this.onend);
+		this.source.addEventListener('touchstart', this.start);
+		this.source.addEventListener('touchmove', this.move);
+		document.addEventListener('touchend', this.end);
 		let { left, top } = source.getBoundingClientRect();
 		this.sourceLeft = left;
 		this.sourceTop = top;
@@ -361,9 +324,9 @@ export class TouchInput {
 	disconnect() {
 		let source = this.source;
 		if (source) {
-			source.removeEventListener('touchstart', this.onstart);
-			source.removeEventListener('touchmove', this.onmove);
-			document.removeEventListener('touchend', this.onend);
+			source.removeEventListener('touchstart', this.start);
+			source.removeEventListener('touchmove', this.move);
+			document.removeEventListener('touchend', this.end);
 		}
 		this.source = null;
 		this.listener = null;

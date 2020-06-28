@@ -1,4 +1,4 @@
-declare interface CoordMessage {
+declare interface PointMessage {
 	type : "mousedown" | "mouseup" | "touchstart" | "touchend"
 
 	id : number
@@ -13,7 +13,7 @@ declare interface CoordMessage {
 }
 
 declare interface Listener {
-	push(m : CoordMessage) : void
+	push(m : PointMessage) : void
 	dispatchAll() : void
 }
 

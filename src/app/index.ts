@@ -1,12 +1,13 @@
 import PuzzleSet from './PuzzleSet'
 import RAFPulseClock from './RAFPulseClock'
 import Game from './Game'
-import { MouseInput, TouchInput, Detector } from './Input';
+import { MouseInput, TouchInput } from './Input';
+
+import { isTouchDevice } from './touchscreen';
 
 let game : Game;
 let clock : RAFPulseClock;
 
-let detector : Detector;
 let input : MouseInput | TouchInput;
 
 let puzzleSet : PuzzleSet;
@@ -67,18 +68,14 @@ const maxSize = 9;
 const puzzleSelector = document.getElementById('puzzle-selector') as HTMLSelectElement;
 
 
-const blankPositionSelector = {
-	topLeft : document.getElementById('blank-pos-top-left') as HTMLInputElement,
-	topRight : document.getElementById('blank-pos-top-right') as HTMLInputElement,
-	bottomLeft : document.getElementById('blank-pos-bottom-left') as HTMLInputElement,
-	bottomRight : document.getElementById('blank-pos-bottom-right') as HTMLInputElement,
-}
+const	topLeft = document.getElementById('blank-pos-top-left') as HTMLInputElement;
+const	topRight = document.getElementById('blank-pos-top-right') as HTMLInputElement;
+const	bottomLeft = document.getElementById('blank-pos-bottom-left') as HTMLInputElement;
+const	bottomRight = document.getElementById('blank-pos-bottom-right') as HTMLInputElement;
+
 
 function decodeBlank() : [boolean, boolean] {
-	return [
-		blankPositionSelector.bottomLeft.checked || blankPositionSelector.bottomRight.checked,
-		blankPositionSelector.topRight.checked || blankPositionSelector.bottomRight.checked
-	]
+	return [ bottomLeft.checked || bottomRight.checked, topRight.checked || bottomRight.checked]
 }
 
 const labelSelector = {
@@ -150,21 +147,22 @@ function resetStory() {
 }
 
 
-function setSize(v : number, bottom : boolean, right : boolean) {
-	game.setSize(v, bottom, right);
+function setSizeAndBlank(v : number) {
+	game.setSize(v, ...decodeBlank());
 	setButtonsAsInitial();
 	resetStory();
 }
 
 function puzzleChangeHandler(ev : Event) {
 	if (game.checkBeforeEnd()) {
-		setSize(puzzleSize, ...decodeBlank());
+		setSizeAndBlank(puzzleSize);
 	} else {
 		ev.preventDefault();
 		return false;
 	}
 }
 
+/** 현재 설정으로 게임을 새로 시작한다. */
 function _start(t : DOMHighResTimeStamp) {
 	game.end(null);
 	game.shuffle();
@@ -233,10 +231,10 @@ loadPuzzleSets().then((sets) => {
 		}
 	});
 
-	blankPositionSelector.topLeft.addEventListener('input', puzzleChangeHandler);
-	blankPositionSelector.topRight.addEventListener('input', puzzleChangeHandler);
-	blankPositionSelector.bottomLeft.addEventListener('input', puzzleChangeHandler);
-	blankPositionSelector.bottomRight.addEventListener('input', puzzleChangeHandler);
+	topLeft.addEventListener('input', puzzleChangeHandler);
+	topRight.addEventListener('input', puzzleChangeHandler);
+	bottomLeft.addEventListener('input', puzzleChangeHandler);
+	bottomRight.addEventListener('input', puzzleChangeHandler);
 
 	sizeDecrease.addEventListener('click', ev => {
 		if (game.checkBeforeEnd()) {
@@ -244,7 +242,7 @@ loadPuzzleSets().then((sets) => {
 			sizeIncrease.disabled = false;
 			sizeView.innerText = puzzleSize.toString();
 			if (puzzleSize == minSize) sizeDecrease.disabled = true;
-			setSize(puzzleSize, ...decodeBlank());
+			setSizeAndBlank(puzzleSize);
 		} else {
 			ev.preventDefault();
 			return false;
@@ -257,7 +255,7 @@ loadPuzzleSets().then((sets) => {
 			sizeDecrease.disabled = false;
 			sizeView.innerText = puzzleSize.toString();
 			if (puzzleSize == maxSize) sizeIncrease.disabled = true;
-			setSize(puzzleSize, ...decodeBlank());
+			setSizeAndBlank(puzzleSize);
 		} else {
 			ev.preventDefault();
 			return false;
@@ -300,38 +298,20 @@ loadPuzzleSets().then((sets) => {
 
 	let scale = gameCanvas.width / gameCanvas.getBoundingClientRect().width;
 
+	if (isTouchDevice()) {
+		input = new TouchInput();
+		input.connect(gameCanvas, game, scale);
+	} else {
+		input = new MouseInput();
+		input.connect(gameCanvas, game, scale);
+	}
 	clock = new RAFPulseClock(t => {
-		game.update(t);
-		game.render(gameContext);
-		game.timer.render(timerContext);
-	});
-
-	let updateFunctionOnInputConnected = (t : DOMHighResTimeStamp) => {
 		input.update();
 		game.update(t, input.coordinate);
 		game.render(gameContext);
 		game.timer.render(timerContext);
-	}
-
+	});
 	clock.start();
-
-	detector = new Detector();
-
-	detector.whenItsMouse = ev => {
-		input = new MouseInput();
-		input.connect(gameCanvas, game, scale);
-		clock.update = updateFunctionOnInputConnected;
-		if (ev.target == gameCanvas) input.onstart(ev);
-	}
-
-	detector.whenItsTouch = ev => {
-		input = new TouchInput();
-		input.connect(gameCanvas, game, scale);
-		clock.update = updateFunctionOnInputConnected;
-		if (ev.target == gameCanvas) input.onstart(ev);
-	}
-
-	detector.open();
 
 });
 

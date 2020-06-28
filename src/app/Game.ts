@@ -86,6 +86,16 @@ export default class Game {
 	 *  */
 	solvable : boolean
 
+	/**
+	 * 다음 렌더링 단계에서 다시 그리기를 할 프레임 수
+	 * 
+	 * - 이 숫자가 0보다 클 때에만 렌더링이 실행된다.
+	 * - 렌더링하면 이 숫자가 1 감소한다.
+	 * - 마우스를 누르고 있으면 매 프레임마다 1 증가한다.
+	 * - 마우스를 놓으면 120으로 정해진다.
+	 */
+	renderLife : number = 1
+
 	/** 게임 재설정 시 이전 설정을 기억하기 위한 속성 */
 	private _puzzleSet : PuzzleSet;
 	private _bottomBlank = true;
@@ -153,7 +163,7 @@ export default class Game {
 		}
 	}
 
-	/** 퍼즐 크기를 설정한다. 게임 재설정이 요구된다. */
+	/** 퍼즐 크기와 빈칸의 위치를 설정한다. 내부적으로 게임을 종료시킨다. */
 	setSize(size : number, bottomBlank : boolean, rightBlank : boolean) {
 		this.end(null);
 		this.timer.reset();
@@ -293,15 +303,15 @@ export default class Game {
 		return true;
 	}
 
-	private messageQueue : CoordMessage[] = [];
+	private messageQueue : PointMessage[] = [];
 
-	push(m : CoordMessage) {
+	push(m : PointMessage) {
 		this.messageQueue.unshift(m);
 	}
 
 	// 메시지 다 뺀다
 	dispatchAll() {
-		let m : CoordMessage;
+		let m : PointMessage;
 		while ((m = this.messageQueue.pop()) != null) {
 			switch(m.type) {
 				case "mousedown":
@@ -317,7 +327,7 @@ export default class Game {
 	}
 
 	/** rAF에 동기화된 마우스 클릭 핸들러 */
-	private dispatchCoordstart(m : CoordMessage) {
+	private dispatchCoordstart(m : PointMessage) {
 		if (this.acceptCoordinate(m.startX, m.startY)) {
 			this.grab.onCoordstart(m, this);
 
@@ -329,10 +339,12 @@ export default class Game {
 	}
 
 	/** rAF에 동기화된 마우스 놓기 핸들러 */
-	private dispatchCoordend(m : CoordMessage) {
+	private dispatchCoordend(m : PointMessage) {
 		// 아직까지 마우스 홀딩 상태를 grab.piece의 nullity만으로 판단하고 있다. 다른 플래그의 필요성은 아직 없는 것 갓다....
 		if (this.grab.piece) {
 			this.grab.onCoordend(m, this);
+			// 퍼즐조각이 제자리를 찾고 불똥이 다 튀기까지 다시 그리기를 할 시간을 준다.
+			this.renderLife = 120;
 		}
 	}
 
@@ -353,6 +365,7 @@ export default class Game {
 		this.handlePlay = this._updateForPlaying;
 		this.playing = true;
 		this.timer.start(startTime);
+		this.renderLife = 1;
 	}
 
 	/** 게임을 끝낸다. (게임 중단, 게임 클리어 모두 포함) */
@@ -411,6 +424,7 @@ export default class Game {
 
 		if (this.grab.piece && coord) {
 			this.grab.update(this, coord);
+			this.renderLife++;
 		}
 		
 		for (const piece of this.grab.concern) {
@@ -429,13 +443,17 @@ export default class Game {
 
 	/** 그린다. */
 	render(context : CanvasRenderingContext2D) {
-		context.clearRect(0, 0, this.viewWidth, this.viewHeight);
-		for (const piece of this.pieces) {
-			if (piece.tag != this.blankTag) piece.render(context, this.showLabel);
+		if (this.renderLife > 0) {
+			context.clearRect(0, 0, this.viewWidth, this.viewHeight);
+			for (const piece of this.pieces) {
+				if (piece.tag != this.blankTag) piece.render(context, this.showLabel);
+			}
+			for (const sprite of this.sprites) {
+				sprite.render(context);
+			}
+			this.renderLife--;
 		}
-		for (const sprite of this.sprites) {
-			sprite.render(context);
-		}
+		
 	}
 
 }
