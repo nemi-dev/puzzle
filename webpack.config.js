@@ -1,5 +1,8 @@
 const path = require('path');
 
+const distPath = path.resolve(__dirname, 'dist');
+const assetPath = path.resolve(__dirname, 'assets');
+
 const fileLoader = {
 	loader : "file-loader",
 	options : {
@@ -8,6 +11,14 @@ const fileLoader = {
 		publicPath : "/",
 		esModule : false
 	}
+}
+
+/** @type {import('webpack-dev-server').Configuration} */
+const devServer = {
+	contentBase : [distPath, assetPath],
+	compress : true,
+	port : 8000,
+	hot : true
 }
 
 /** @type {import('webpack').Configuration[]} */
@@ -29,8 +40,10 @@ const configurations = [{
 	resolve : {
 		extensions : [ '.ts', '.js' ]
 	},
-	mode : 'production',
-	// devtool : 'eval-source-map'
+	mode : 'development',
+	// mode : 'production',
+	// devtool : 'eval-source-map',
+	devServer
 },
 {
 	plugins : [
@@ -87,8 +100,5 @@ const configurations = [{
 configurations.forEach(val => {
 	val.mode = 'production';
 	val.context = path.resolve(__dirname, 'src');
-	val.devServer = {
-
-	}
 });
 module.exports = configurations;
