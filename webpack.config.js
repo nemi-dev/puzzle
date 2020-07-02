@@ -17,8 +17,7 @@ const fileLoader = {
 const devServer = {
 	contentBase : [distPath, assetPath],
 	compress : true,
-	port : 8000,
-	hot : true
+	port : 8000
 }
 
 /** @type {import('webpack').Configuration[]} */
