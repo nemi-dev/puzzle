@@ -7,7 +7,9 @@ const router = express.Router();
 
 router.use(express.static(path.resolve(__dirname, 'dist'), {
 	extensions : ['html']
-}))
+}));
+
+router.use(express.static(path.resolve(__dirname, 'assets')));
 
 app.use(router);
 

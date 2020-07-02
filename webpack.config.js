@@ -1,10 +1,20 @@
 const path = require('path');
 
+const fileLoader = {
+	loader : "file-loader",
+	options : {
+		name : "[path][name].[ext]",
+		outputPath : "dist/",
+		publicPath : "/",
+		esModule : false
+	}
+}
+
 /** @type {import('webpack').Configuration[]} */
-module.exports = [{
-	entry : './src/app/index.ts',
+const configurations = [{
+	entry : './app/index.ts',
 	output : {
-		filename : 'app.js',
+		filename : 'puzzle.js',
 		path : path.resolve(__dirname, 'dist')
 	},
 	module : {
@@ -23,43 +33,62 @@ module.exports = [{
 	// devtool : 'eval-source-map'
 },
 {
-	entry : './bundle.js',
-	context : path.resolve(__dirname, 'src'),
+	plugins : [
+
+	],
+	entry : './index.html',
 	output : {
-		filename : 'undefined.js',
-		path : path.resolve(__dirname, 'dist')
+		filename : 'undefined.bundle.js',
+		path : path.resolve(__dirname)
 	},
 	module : {
 		rules : [
 			{
-				test : /\.(html|css|svg|png|wav)$/,
+				test : /\.html$/i,
 				use : [
-					"ignore-loader",
+					fileLoader,
 					"extract-loader",
 					{
-						loader : "file-loader",
+						loader : "html-loader",
 						options : {
-							name : "[path][name].[ext]",
-							esModule : false
+							minimize : true,
+							attrs : ['img:src', 'link:href'],
+							interpolate : 'require'
 						}
 					}
 				]
 			},
 			{
-				test : /\.json$/,
+				test : /\.md$/i,
 				use : [
-					"ignore-loader",
+					"html-loader",
+					"markdown-loader"
+				]
+			},
+			{
+				test : /\.css$/i,
+				use : [
+					fileLoader,
 					"extract-loader",
-					{
-						loader : "file-loader",
-						options : {
-							name : "[path][name].[ext]",
-							esModule : false
-						}
-					}
-				],
-				type : "javascript/auto"
+					"css-loader"
+				]
+			},
+			{
+				test : /\.svg$/i,
+				use : [
+					fileLoader
+				]
 			}
 		]
 	}
 }]
+
+
+configurations.forEach(val => {
+	val.mode = 'production';
+	val.context = path.resolve(__dirname, 'src');
+	val.devServer = {
+
+	}
+});
+module.exports = configurations;

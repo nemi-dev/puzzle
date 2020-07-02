@@ -3,16 +3,20 @@
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
-  "dependencies": {},
   "devDependencies": {
+    "css-loader": "^3.6.0",
     "express": "^4.17.1",
     "extract-loader": "^5.1.0",
     "file-loader": "^6.0.0",
     "howler": "^2.2.0",
     "http-errors": "^1.7.3",
     "ignore-loader": "^0.1.2",
+    "markdown-loader": "^5.1.0",
     "ts-loader": "^7.0.4",
-    "typescript": "^3.9.2"
+    "typescript": "^3.9.2",
+    "webpack": "4.41.4",
+    "html-loader": "^0.5.5",
+    "webpack-dev-server": "^3.11.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
