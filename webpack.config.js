@@ -17,7 +17,7 @@ const fileLoader = {
 const devServer = {
 	contentBase : [distPath, assetPath],
 	compress : true,
-	port : 8000
+	port : 9000
 }
 
 /** @type {import('webpack').Configuration[]} */
@@ -100,4 +100,5 @@ configurations.forEach(val => {
 	val.mode = 'production';
 	val.context = path.resolve(__dirname, 'src');
 });
+
 module.exports = configurations;
