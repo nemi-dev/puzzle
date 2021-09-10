@@ -277,16 +277,22 @@ loadPuzzleSets().then((sets) => {
 
 	labelSelector.none.addEventListener('input', ev => {
 		game.showLabel = false;
+		game.renderLife += 1;
+		game.render(gameContext);
 	});
 
 	labelSelector.phone.addEventListener('input', ev => {
 		game.showLabel = true;
 		game.assignLabel(false);
+		game.renderLife += 1;
+		game.render(gameContext);
 	});
 
 	labelSelector.keypad.addEventListener('input', ev => {
 		game.showLabel = true;
 		game.assignLabel(true);
+		game.renderLife += 1;
+		game.render(gameContext);
 	});
 
 	puzzleSet = sets[puzzleSelector.value];
@@ -308,6 +314,7 @@ loadPuzzleSets().then((sets) => {
 	clock = new RAFPulseClock(t => {
 		input.update();
 		game.update(t, input.coordinate);
+		game.renderLife += 1;
 		game.render(gameContext);
 		game.timer.render(timerContext);
 	});

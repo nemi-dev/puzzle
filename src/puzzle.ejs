@@ -4,7 +4,6 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="./style.css">
 	<title>LAST_ORIGIN Slide Puzzle</title>
 </head>
 <body>
@@ -55,18 +54,11 @@
 		</div>
 	</div>
 	<div id="article">
-		${require('../README.md')}
+		<%= require("../README.md") %>
 	</div>
-	<footer>
-		<a href="https://gall.dcinside.com/lastorigin" target="_blank" rel="noopener noreferrer">
-			<span style="display: inline-block; padding:1em; font-size: 18px; font-weight: bold;"><span style="color: #6674cc;">라스트 오리진</span> <span style="color: #7c7c7c;">마이너 갤러리</span></span>
-		</a>
-		<div style="font-size: 50%;">클릭시 링크로 이동합니다</div>
-	</footer>
 	<span class="floating">
 		<button id="show-config"><img src="/settings.svg"></button><br>
 		<button id="show-info"><img src="/info.svg"></button>
 	</span>
 </body>
-<script src="puzzle.js"></script>
 </html>

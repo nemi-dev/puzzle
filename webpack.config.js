@@ -1,31 +1,29 @@
 const path = require('path');
-
-const distPath = path.resolve(__dirname, 'dist');
-const assetPath = path.resolve(__dirname, 'assets');
-
-const fileLoader = {
-	loader : "file-loader",
-	options : {
-		name : "[path][name].[ext]",
-		outputPath : "dist/",
-		publicPath : "/",
-		esModule : false
-	}
-}
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const fs = require("fs");
+const marked = require("marked");
 
 /** @type {import('webpack-dev-server').Configuration} */
 const devServer = {
-	contentBase : [distPath, assetPath],
 	compress : true,
-	port : 9000
+	port : 8000,
+	static : [
+		{
+			directory : path.resolve(__dirname, "public")
+		}
+	]
 }
 
-/** @type {import('webpack').Configuration[]} */
-const configurations = [{
-	entry : './app/index.ts',
+const mode = process.env.NODE_ENV || "development";
+const devtool = process.env.NODE_ENV !== "production" ? "eval-source-map" : false;
+
+/** @type {import('webpack').Configuration} */
+const configurations = {
+	entry : ['./src/app/index.ts', './src/puzzle.css'],
 	output : {
 		filename : 'puzzle.js',
-		path : path.resolve(__dirname, 'dist')
+		clean : true
 	},
 	module : {
 		rules : [
@@ -33,72 +31,61 @@ const configurations = [{
 				test : /\.ts$/,
 				use : 'ts-loader',
 				exclude : /node_modules/
+			},
+			{
+				test : /\.css$/i,
+				use : [
+					{
+						loader : MiniCssExtractPlugin.loader,
+						options : {
+							esModule : false,
+						}
+					},
+					{
+						loader :'css-loader',
+						options : {
+							esModule : false,
+							sourceMap : process.env.NODE_ENV !== 'production'
+						}
+					},
+				]
+			},
+			{
+				test : /\.md$/i,
+				type : "asset/source",
+				use : [
+					"extract-loader",
+					"html-loader",
+					"markdown-loader"
+				]
 			}
 		]
 	},
 	resolve : {
 		extensions : [ '.ts', '.js' ]
 	},
-	mode : 'development',
-	// mode : 'production',
-	// devtool : 'eval-source-map',
-	devServer
-},
-{
+	mode,
+	devtool,
+	devServer,
 	plugins : [
-
-	],
-	entry : './index.html',
-	output : {
-		filename : 'undefined.bundle.js',
-		path : path.resolve(__dirname)
-	},
-	module : {
-		rules : [
-			{
-				test : /\.html$/i,
-				use : [
-					fileLoader,
-					"extract-loader",
-					{
-						loader : "html-loader",
-						options : {
-							minimize : true,
-							attrs : ['img:src', 'link:href'],
-							interpolate : 'require'
-						}
-					}
-				]
-			},
-			{
-				test : /\.md$/i,
-				use : [
-					"html-loader",
-					"markdown-loader"
-				]
-			},
-			{
-				test : /\.css$/i,
-				use : [
-					fileLoader,
-					"extract-loader",
-					"css-loader"
-				]
-			},
-			{
-				test : /\.svg$/i,
-				use : [
-					fileLoader
-				]
+		new HtmlWebpackPlugin({
+			template : require.resolve("./src/puzzle.ejs"),
+			filename : "puzzle.html",
+			minify : {
+				collapseWhitespace: true,
+				collapseInlineTagWhitespace : true,
+				removeComments: true,
+				removeRedundantAttributes: true,
+				removeScriptTypeAttributes: true,
+				removeStyleLinkTypeAttributes: true,
+				useShortDoctype: true
 			}
-		]
-	}
-}]
+		}),
+		new MiniCssExtractPlugin({
+			filename : "puzzle.css"
+		})
+	]
+}
 
-
-configurations.forEach(val => {
-	val.mode = 'production';
-	val.context = path.resolve(__dirname, 'src');
-});
 
 module.exports = configurations;
