@@ -1,8 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const fs = require("fs");
-const marked = require("marked");
 
 /** @type {import('webpack-dev-server').Configuration} */
 const devServer = {
@@ -54,8 +52,6 @@ const configurations = {
 				test : /\.md$/i,
 				type : "asset/source",
 				use : [
-					"extract-loader",
-					"html-loader",
 					"markdown-loader"
 				]
 			}

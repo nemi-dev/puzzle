@@ -4,6 +4,7 @@ import Game from './Game'
 import { MouseInput, TouchInput } from './Input';
 
 import { isTouchDevice } from './touchscreen';
+import puzzleSetDataArray from "./puzzleset.json";
 
 let game : Game;
 let clock : RAFPulseClock;
@@ -88,12 +89,8 @@ const labelSelector = {
 
 async function loadPuzzleSets () {
 	const puzzleSets : PuzzleSet[] = [];
-	const response = await fetch('puzzleset.json');
-	
-	const puzzleSetDataArray = await response.json() as PuzzleSet[]
 	for (let i = 0; i < puzzleSetDataArray.length; i++) {
-		const puzzleSet = puzzleSetDataArray[i];
-		(puzzleSet as PuzzleSet & { __proto__ : PuzzleSet }).__proto__ = PuzzleSet.prototype;
+		const puzzleSet = new PuzzleSet(puzzleSetDataArray[i]);
 		puzzleSets.push(puzzleSet);
 
 		const selectOption = document.createElement('option');
@@ -106,8 +103,8 @@ async function loadPuzzleSets () {
 }
 
 function setButtonsAsInitial() {
-	startButton.hidden = false;
 	startButton.innerText = '시작하기';
+	startButton.hidden = false;
 	stopButton.hidden = true;
 	nextButton.hidden = true;
 	randomButton.hidden = false;
@@ -121,8 +118,8 @@ function setButtonsAsStart() {
 }
 
 function setButtonsAsComplete() {
-	startButton.hidden = false;
 	startButton.innerText = '다시하기';
+	startButton.hidden = false;
 	stopButton.hidden = true;
 	nextButton.hidden = false;
 	randomButton.hidden = false;

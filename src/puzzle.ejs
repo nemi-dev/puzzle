@@ -7,7 +7,7 @@
 	<title>LAST_ORIGIN Slide Puzzle</title>
 </head>
 <body>
-	<div class="game-button-group" style="margin: 10px;">
+	<div class="game-button-group">
 		<button id="start">시작하기</button>
 		<button id="stop" hidden>그만두기</button>
 		<button id="next" hidden>다음 퍼즐</button>
@@ -15,8 +15,8 @@
 	</div>
 	<div class="area area-fit">
 		<div id="first-wrapper">
-			<canvas id="timer-canvas" width="480" height="60" style="width: 240px;"></canvas>
-			<canvas id="game-canvas" width="720" height="720" style="width: 360px;"></canvas>
+			<canvas id="timer-canvas" width="480" height="60"></canvas>
+			<canvas id="game-canvas" width="720" height="720"></canvas>
 		</div>
 		<div id="second-wrapper">
 			<div id="puzzle-preview">
@@ -34,28 +34,37 @@
 			<button id="size-increase" class="sizer">+</button>
 		</div>
 		<div class="item"><label class="config-label" for="puzzle-selector">퍼즐셋</label><select id="puzzle-selector"></select></div>
-		<div class="item">
+		<div class="item vertical">
 			<div class="config-label">완성된 퍼즐에서 빈 칸의 위치</div>
-			<div style="text-align: center;">
-			<input type="radio" name="blank-pos" id="blank-pos-top-left"><label for="blank-pos-top-left">↖️</label><!--
-			--><input type="radio" name="blank-pos" id="blank-pos-top-right"><label for="blank-pos-top-right">↗️</label><br><!--
-			--><input type="radio" name="blank-pos" id="blank-pos-bottom-left" checked><label for="blank-pos-bottom-left">↙️</label><!--
-			--><input type="radio" name="blank-pos" id="blank-pos-bottom-right"><label for="blank-pos-bottom-right">↘️</label><!--
-			--></div>
+			<div>
+				<input type="radio" name="blank-pos" id="blank-pos-top-left"><label for="blank-pos-top-left">↖️</label>
+				<input type="radio" name="blank-pos" id="blank-pos-top-right"><label for="blank-pos-top-right">↗️</label><br>
+				<input type="radio" name="blank-pos" id="blank-pos-bottom-left" checked><label for="blank-pos-bottom-left">↙️</label>
+				<input type="radio" name="blank-pos" id="blank-pos-bottom-right"><label for="blank-pos-bottom-right">↘️</label>
 		</div>
-		<div class="item">
+		</div>
+		<div class="item vertical">
 			<div class="config-label">퍼즐에 숫자 표시하기</div>
-			<input type="radio" name="show-label" id="show-label-none" checked><label for="show-label-none">안 함</label><!--
-			--><input type="radio" name="show-label" id="show-label-phone"><label for="show-label-phone">휴대폰</label><!--
-			--><input type="radio" name="show-label" id="show-label-keypad"><label for="show-label-keypad">키패드</label>
+			<div>
+				<input type="radio" name="show-label" id="show-label-none" checked><label for="show-label-none">안 함</label>
+				<input type="radio" name="show-label" id="show-label-phone"><label for="show-label-phone">휴대폰</label>
+				<input type="radio" name="show-label" id="show-label-keypad"><label for="show-label-keypad">키패드</label>
+			</div>
 		</div>
-		<div class="item" style="text-align: center;">
+		<div id="config-close-wrapper" class="item">
 			<button id="config-close">닫기</button>
 		</div>
 	</div>
 	<div id="article">
 		<%= require("../README.md") %>
 	</div>
+	<footer>
+		<a id="link-to-arcalive" href="https://arca.live/lastorigin" target="_blank" rel="noopener noreferrer">
+			<span>아카라이브</span>&nbsp;
+			<span>라스트 오리진 채널</span>
+		</a>
+		<div>클릭시 링크로 이동합니다</div>
+	</footer>
 	<span class="floating">
 		<button id="show-config"><img src="/settings.svg"></button><br>
 		<button id="show-info"><img src="/info.svg"></button>

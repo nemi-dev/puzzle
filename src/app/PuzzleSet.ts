@@ -10,7 +10,10 @@ export default class PuzzleSet {
 	top : number
 	size : number
 	solvable : boolean
-	texture : HTMLImageElement
+	texture? : HTMLImageElement
+	constructor(o : Omit<PuzzleSet, "texture" | "getPosition" | "waitForImageLoad">) {
+		Object.assign(this, o);
+	}
 
 	/**
 	 * 행, 열 번호로 이미지에서 참조할 좌표를 찾는다.

@@ -5,13 +5,13 @@
   ],
 	"compilerOptions": {
 		"allowJs": true,
-		"outDir": "./build/script/",
 		"target": "ES2020",
 		"skipLibCheck": true,
 		"moduleResolution": "Node",
 		"allowSyntheticDefaultImports": true,
 		"sourceMap": true,
-		"jsx": "react"
+		"jsx": "react",
+		"resolveJsonModule": true
 	},
 	"typingOptions" : {
 		"enableAutoDiscovery" : true

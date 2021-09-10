@@ -34,6 +34,7 @@ button:disabled {
 .game-button-group {
 	display: flex;
 	justify-content: center;
+	margin: 10px;
 }
 
 #start {
@@ -64,11 +65,15 @@ button:disabled {
 	flex-direction: column;
 }
 
-#second-wrapper {
-	width: 320px;
+#timer-canvas {
+	width: 240px;
 }
 
-#preview-canvas {
+#game-canvas {
+	width: 360px;
+}
+
+#second-wrapper, #preview-canvas {
 	width: 250px;
 }
 
@@ -78,20 +83,19 @@ button:disabled {
 }
 
 #config {
-	display: flex;
-	align-items: center;
-	justify-content: space-evenly;
-	flex-direction: column;
-	
-	height: 350px;
+	height: 300px;
 	background-color: #292b2c;
-	box-sizing: border-box;
 	border-radius: 20px;
 	box-shadow: 0 1px 3px #00000080;
 }
 
-div.item * {
-	vertical-align: middle;
+#config .item {
+	display: flex;
+	align-items: center;
+}
+
+#config .item.vertical {
+	flex-direction: column;
 }
 
 .config-label { 
@@ -151,7 +155,7 @@ input:checked[type="radio"] + label {
 
 
 #article, #config {
-	width : calc(1280px - 20vw);
+	width : calc(1000px - 20vw);
 	max-width: calc(100vw - 2em);
 	margin: auto;
 }
@@ -186,15 +190,40 @@ footer {
 	padding-top: 45px;
 	padding-bottom: 25px;
 	text-align: center;
+	font-size: 0.5rem;
+}
+
+a#link-to-arcalive {
+	display: inline-block;
+	padding:1em;
+	font-size: 1.2rem;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+a#link-to-arcalive :nth-child(1) {
+	color: #9e9e9e;
+}
+
+a#link-to-arcalive :nth-child(2) {
+	color: #9e9e9e;
 }
 
 @media (min-width : 768px) {
-	#config-close, #show-config {
-		display: none;
+	#config-close, #config-close-wrapper, #show-config {
+		display: none!important;
+	}
+	#config {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		place-items: center;
 	}
 }
 
 @media (max-width : 767px) {
+	:root {
+		font-size: 14px;
+	}
 	.area-fit {
 		flex-direction: column;
 		align-items: center;
@@ -207,8 +236,16 @@ footer {
 	}
 	
 	#config {
+
+		display: flex;
+		align-items: center;
+		justify-content: space-evenly;
+		flex-direction: column;
+
 		position: fixed;
-		width: 250px;
+		width: unset;
+		padding: 8px;
+		gap : 8px;
 		right: 50px;
 		top: 5px;
 	}
