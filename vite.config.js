@@ -22,5 +22,5 @@ export default defineConfig({
       },
     },
   },
-  plugins: [mdPlugin()]
+  plugins: [mdPlugin({ mode: "html" })]
 });

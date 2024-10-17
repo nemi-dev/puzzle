@@ -57,6 +57,7 @@
 		</div>
 	</div>
 	<div id="article">
+		
 		<!-- <%= require("../README.md") %> -->
 	</div>
 	<footer>
@@ -72,4 +73,8 @@
 	</span>
 	<script src="./src/index.ts" type="module"></script>
 </body>
+<script type="module">
+	import { html } from "./README.md"
+	document.querySelector("#article").innerHTML = html;
+</script>
 </html>
