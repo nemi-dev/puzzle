@@ -1,19 +1,23 @@
 {
-	"include": ["src/**/*.ts", "./src/**/*.tsx"],
-	"exclude": [
-    "node_modules"
-  ],
-	"compilerOptions": {
-		"allowJs": true,
-		"target": "ES2020",
-		"skipLibCheck": true,
-		"moduleResolution": "Node",
-		"allowSyntheticDefaultImports": true,
-		"sourceMap": true,
-		"jsx": "react",
-		"resolveJsonModule": true
-	},
-	"typingOptions" : {
-		"enableAutoDiscovery" : true
-	}
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    // "strict": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
 }

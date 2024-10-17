@@ -5,6 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 	<title>LAST_ORIGIN Slide Puzzle</title>
+	<link rel="stylesheet" href="./src/puzzle.css">
 </head>
 <body>
 	<div class="game-button-group">
@@ -56,7 +57,7 @@
 		</div>
 	</div>
 	<div id="article">
-		<%= require("../README.md") %>
+		<!-- <%= require("../README.md") %> -->
 	</div>
 	<footer>
 		<a id="link-to-arcalive" href="https://arca.live/lastorigin" target="_blank" rel="noopener noreferrer">
@@ -69,5 +70,6 @@
 		<button id="show-config"><img src="/settings.svg"></button><br>
 		<button id="show-info"><img src="/info.svg"></button>
 	</span>
+	<script src="./src/index.ts" type="module"></script>
 </body>
 </html>
